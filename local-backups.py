@@ -21,10 +21,10 @@ def generate_default_config():
     config =  {
         "telegramToken": "",
         "telegramChat": "",
-        "logFolder": "./LOG",
+        "logFolder": "./Log",
         "backupFolder": "./Backups",
-        "dailyFolder": "daily",
-        "weeklyFolder": "weekly",
+        "dailyFolder": "Daily",
+        "weeklyFolder": "Weekly",
         "DefaultDbHost": "127.0.0.1",
         "DefaultDbPort": "3306",
         "DefaultDbSocket": "",
@@ -166,6 +166,105 @@ def interrupt_job(type):
     del_pid()
     sys.exit(1)
 
+def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typeIn):
+    text = f"Processing {typeIn} DB backup {nameIn} - DB name {dbIn} - TO folder {tofolderIn}"
+    print(text)
+    logging.info(text)
+    #checking if all necessary default variables for mysql are set
+    if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
+        print(f"Key is empty!")
+    backup_file = tofolderIn+"/"+nameIn+".sql.gz"
+    #check what we use: default or personal credentials
+    if hostIn:
+        mysqlHost = hostIn
+    else:
+        mysqlHost = BCKP_DEF_DB_HOST
+    if userIn:
+        mysqlUser = userIn
+    else:
+        mysqlUser = BCKP_DEF_DB_USER
+    if passIn:
+        mysqlPass = passIn
+    else:
+        mysqlPass = BCKP_DEF_DB_PASS
+    #check first of all for the personal defined parameters Socket and Port
+    #if set both at the same time:
+    if portIn and socketIn:
+        additional = f"-S{socketIn}"
+        text = f"Both personal Socket and Port are defined. Taking Socket as high priority."
+        print(text)
+        logging.info(text)
+    #if not set both, trying to switch to default defined values
+    elif not portIn and not socketIn:
+        #if both default values are not set - sending alert
+        if not BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
+            text = f"Neither default socket nor default port is set. Can't proceed with DB {nameIn} backup"
+            print(text)
+            logging.info(text)
+            send_to_telegram("🚒Error:",text)
+        elif BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
+            additional = f"-S{BCKP_DEF_DB_SOCKET}"
+            text = f"Using default SOCKET with DB {nameIn} backup"
+            print(text)
+            logging.info(text)
+        elif not BCKP_DEF_DB_SOCKET and BCKP_DEF_DB_PORT:
+            additional = f"-P{BCKP_DEF_DB_PORT}"
+            text = f"Using default PORT with DB {nameIn} backup"
+            print(text)
+            logging.info(text)
+    #if set any of two personal values
+    elif portIn and not socketIn:
+        additional = f"-P{portIn}"
+        text = f"Using personal PORT value with DB {nameIn} backup"
+        print(text)
+        logging.info(text)
+    elif not portIn and socketIn:
+        additional = f"-S{socketIn}"
+        text = f"Using personal SOCKET value with DB {nameIn} backup"
+        print(text)
+        logging.info(text)
+    #now check if ALL selected
+    if dbIn == "ALL":
+        cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases.sql.gz"
+        result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
+        if "error" in str(result):
+            text = f"Some error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr}"
+            logging.error(text)
+            print(text)
+            send_to_telegram("🚒Error:",text)
+        text = f"Daily ALL DB Local backup of {nameIn} done successfully!"
+        print(text)
+        logging.info(text)
+    #now check if FETCH selected
+    elif dbIn == "FETCH":
+        cmd = f'mysql -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} -e "SHOW DATABASES;"'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        databases = result.stdout.strip().split("\n")[1:]
+        text = f"Total fetched databases: {databases}"
+        print(text)
+        logging.info(text)
+        exclude_dbs = {"information_schema", "performance_schema", "mysql", "sys"}
+        databases = [db for db in databases if db not in exclude_dbs]
+        for db in databases:
+            print(f"Creating dump for {db}...")
+            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}.sql.gz"
+            result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
+            if "error" in str(result):
+                text = f"Some error while dumping Daily FETCH DB backup of {db}. Error: {result.stderr}"
+                logging.error(text)
+                print(text)
+                send_to_telegram("🚒Error:",text)
+                continue
+    #if individual database selected
+    else:
+        cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
+        result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
+        if "error" in str(result):
+            text = f"Some error while dumping Weekly DB backup of {nameIn}. Error: {result.stderr}"
+            logging.error(text)
+            print(text)
+            send_to_telegram("🚒Error:",text)
+
 def daily_local():
     #check if the root backup folder with daily backup folder are accessable.
     if not os.path.exists(os.path.join(BCKP_FOLDER,DAILY_FOLDER)):
@@ -188,72 +287,8 @@ def daily_local():
     for item in LOCAL_BCKP_LIST:
         #If there is DB variable - doing backup of DB
         if item.get('DB'):
-            text = f"Processing daily DB backup {item.get('Name')} - DB name {item.get('DB')} - TO folder {os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)}"
-            print(text)
-            logging.info(text)
-            #checking if all necessary default variables for mysql are set
-            if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
-                print(f"Key is empty!")
-            backup_file = TO_FOLDER+"/"+item.get('Name')+".sql.gz"
-            #check what we use: default or personal credentials
-            if item.get('Host'):
-                mysqlHost = item.get('Host')
-            else:
-                mysqlHost = BCKP_DEF_DB_HOST
-            if item.get('User'):
-                mysqlUser = item.get('User')
-            else:
-                mysqlUser = BCKP_DEF_DB_USER
-            if item.get('Password'):
-                mysqlPass = item.get('Password')
-            else:
-                mysqlPass = BCKP_DEF_DB_PASS
-            #check first of all for the personal defined parameters Socket and Port
-            #if set both at the same time:
-            if item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Both personal Socket and Port are defined. Taking Socket as high priority."
-                print(text)
-                logging.info(text)
-            #if not set both, trying to switch to default defined values
-            elif not item.get('Port') and not item.get('Socket'):
-                #if both default values are not set - sending alert
-                if not BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    text = f"Neither default socket nor default port is set. Can't proceed with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                    send_to_telegram("🚒Error:",text)
-                    continue
-                elif BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    additional = f"-S{BCKP_DEF_DB_SOCKET}"
-                    text = f"Using default SOCKET with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                elif not BCKP_DEF_DB_SOCKET and BCKP_DEF_DB_PORT:
-                    additional = f"-P{BCKP_DEF_DB_PORT}"
-                    text = f"Using default PORT with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-            #if set any of two personal values
-            elif item.get('Port') and not item.get('Socket'):
-                additional = f"-P{item.get('Port')}"
-                text = f"Using personal PORT value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            elif not item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Using personal SOCKET value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {item.get('DB')} | gzip > {backup_file}"
-            result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
-            if "error" in str(result):
-                text = f"Some error while dumping Weekly DB backup of {item.get('Name')}. Error: {result.stderr}"
-                logging.error(text)
-                print(text)
-                send_to_telegram("🚒Error:",text)
-                continue
-            text = f"Daily DB Local backup of {item.get('Name')} done successfully!"
+            mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Local")
+            text = f"Daily-Local DB backup of {item.get('Name')} done successfully!"
             print(text)
             logging.info(text)
     finish_job("Daily-Local")
@@ -298,72 +333,10 @@ def weekly_local():
                 continue
         #If there is DB variable - doing backup of DB
         elif item.get('DB'):
-            text = f"Processing DB backup {item.get('Name')} - DB name {item.get('DB')} - TO folder {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)}"
-            print(text)
-            logging.info(text)
-            #checking if all necessary default variables for mysql are set
-            if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
-                print(f"Key is empty!")
-            backup_file = TO_FOLDER+"/"+item.get('Name')+".sql.gz"
-            #check what we use: default or personal credentials
-            if item.get('Host'):
-                mysqlHost = item.get('Host')
-            else:
-                mysqlHost = BCKP_DEF_DB_HOST
-            if item.get('User'):
-                mysqlUser = item.get('User')
-            else:
-                mysqlUser = BCKP_DEF_DB_USER
-            if item.get('Password'):
-                mysqlPass = item.get('Password')
-            else:
-                mysqlPass = BCKP_DEF_DB_PASS
-            #check first of all for the personal defined parameters Socket and Port
-            #if set both at the same time:
-            if item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Both personal Socket and Port are defined. Taking Socket as high priority."
-                print(text)
-                logging.info(text)
-            #if not set both, trying to switch to default defined values
-            elif not item.get('Port') and not item.get('Socket'):
-                #if both default values are not set - sending alert
-                if not BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    text = f"Neither default socket nor default port is set. Can't proceed with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                    send_to_telegram("🚒Error:",text)
-                    continue
-                elif BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    additional = f"-S{BCKP_DEF_DB_SOCKET}"
-                    text = f"Using default SOCKET with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                elif not BCKP_DEF_DB_SOCKET and BCKP_DEF_DB_PORT:
-                    additional = f"-P{BCKP_DEF_DB_PORT}"
-                    text = f"Using default PORT with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-            #if set any of two personal values
-            elif item.get('Port') and not item.get('Socket'):
-                additional = f"-P{item.get('Port')}"
-                text = f"Using personal PORT value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            elif not item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Using personal SOCKET value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            print(f"Using Host:{mysqlHost} User:{mysqlUser} Pass:{mysqlPass} Add:{additional}")
-            cmd = f"mysqldump1 -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {item.get('DB')} | gzip > {backup_file}"
-            result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
-            if "error" in str(result):
-                text = f"Some error while dumping Weekly DB Local backup of {item.get('Name')}. Error: {result.stderr}"
-                logging.error(text)
-                print(text)
-                send_to_telegram("🚒Error:",text)
-                continue
+            mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Local")
+    text = f"Weekly-Local Files and DB backups done successfully!"
+    print(text)
+    logging.info(text)
     finish_job("Weekly-Local")
 
 def daily_other():
@@ -378,7 +351,7 @@ def daily_other():
     for item in OTHER_BCKP_LIST:
         #If there is DB variable - doing backup of DB
         if item.get('DB'):
-            #Making full path to the destination folder
+            # #Making full path to the destination folder
             TO_FOLDER = os.path.join(BCKP_FOLDER,item.get('Name'),DAILY_FOLDER,CURR_FOLDER_NAME)
             #if ok, check and create for the today's folder
             if not os.path.exists(TO_FOLDER):
@@ -386,74 +359,10 @@ def daily_other():
                 text = f"Created new directory {TO_FOLDER}"
                 print(text)
                 logging.info(text)
-            text = f"Processing daily DB backup {item.get('Name')} - DB name {item.get('DB')} - TO folder {TO_FOLDER}"
-            print(text)
-            logging.info(text)
-            #checking if all necessary default variables for mysql are set
-            if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
-                print(f"Key is empty!")
-            backup_file = TO_FOLDER+"/"+item.get('Name')+".sql.gz"
-            #check what we use: default or personal credentials
-            if item.get('Host'):
-                mysqlHost = item.get('Host')
-            else:
-                mysqlHost = BCKP_DEF_DB_HOST
-            if item.get('User'):
-                mysqlUser = item.get('User')
-            else:
-                mysqlUser = BCKP_DEF_DB_USER
-            if item.get('Password'):
-                mysqlPass = item.get('Password')
-            else:
-                mysqlPass = BCKP_DEF_DB_PASS
-            #check first of all for the personal defined parameters Socket and Port
-            #if set both at the same time:
-            if item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Both personal Socket and Port are defined. Taking Socket as high priority."
-                print(text)
-                logging.info(text)
-            #if not set both, trying to switch to default defined values
-            elif not item.get('Port') and not item.get('Socket'):
-                #if both default values are not set - sending alert
-                if not BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    text = f"Neither default socket nor default port is set. Can't proceed with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                    send_to_telegram("🚒Error:",text)
-                    continue
-                elif BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    additional = f"-S{BCKP_DEF_DB_SOCKET}"
-                    text = f"Using default SOCKET with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                elif not BCKP_DEF_DB_SOCKET and BCKP_DEF_DB_PORT:
-                    additional = f"-P{BCKP_DEF_DB_PORT}"
-                    text = f"Using default PORT with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-            #if set any of two personal values
-            elif item.get('Port') and not item.get('Socket'):
-                additional = f"-P{item.get('Port')}"
-                text = f"Using personal PORT value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            elif not item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Using personal SOCKET value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {item.get('DB')} | gzip > {backup_file}"
-            result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
-            if "error" in str(result):
-                text = f"Some error while dumping Daily DB Other backup of {item.get('Name')}. Error: {result.stderr}"
-                logging.error(text)
-                print(text)
-                send_to_telegram("🚒Error:",text)
-                continue
-            text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
-            print(text)
-            logging.info(text)
+            mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
+    text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
+    print(text)
+    logging.info(text)
     finish_job("Daily-Other")
 
 def weekly_other():
@@ -467,7 +376,6 @@ def weekly_other():
     #start of main function - fetching list and makeing backups
     #listing items, dividing them to Folder and DB versions
     for item in OTHER_BCKP_LIST:
-        print(OTHER_BCKP_LIST)
         #If there is Folder variable - doing backup of folder
         if item.get('Folder'):
             #Making full path to the destination folder
@@ -504,75 +412,10 @@ def weekly_other():
                 text = f"Created new directory {TO_FOLDER}"
                 print(text)
                 logging.info(text)
-            text = f"Processing DB backup {item.get('Name')} - DB name {item.get('DB')} - TO folder {TO_FOLDER}"
-            print(text)
-            logging.info(text)
-            #checking if all necessary default variables for mysql are set
-            if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
-                print(f"Key is empty!")
-            backup_file = TO_FOLDER+"/"+item.get('Name')+".sql.gz"
-            #check what we use: default or personal credentials
-            if item.get('Host'):
-                mysqlHost = item.get('Host')
-            else:
-                mysqlHost = BCKP_DEF_DB_HOST
-            if item.get('User'):
-                mysqlUser = item.get('User')
-            else:
-                mysqlUser = BCKP_DEF_DB_USER
-            if item.get('Password'):
-                mysqlPass = item.get('Password')
-            else:
-                mysqlPass = BCKP_DEF_DB_PASS
-            #check first of all for the personal defined parameters Socket and Port
-            #if set both at the same time:
-            if item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Both personal Socket and Port are defined. Taking Socket as high priority."
-                print(text)
-                logging.info(text)
-            #if not set both, trying to switch to default defined values
-            elif not item.get('Port') and not item.get('Socket'):
-                #if both default values are not set - sending alert
-                if not BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    text = f"Neither default socket nor default port is set. Can't proceed with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                    send_to_telegram("🚒Error:",text)
-                    continue
-                elif BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-                    additional = f"-S{BCKP_DEF_DB_SOCKET}"
-                    text = f"Using default SOCKET with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-                elif not BCKP_DEF_DB_SOCKET and BCKP_DEF_DB_PORT:
-                    additional = f"-P{BCKP_DEF_DB_PORT}"
-                    text = f"Using default PORT with DB {item.get('Name')} backup"
-                    print(text)
-                    logging.info(text)
-            #if set any of two personal values
-            elif item.get('Port') and not item.get('Socket'):
-                additional = f"-P{item.get('Port')}"
-                text = f"Using personal PORT value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            elif not item.get('Port') and item.get('Socket'):
-                additional = f"-S{item.get('Socket')}"
-                text = f"Using personal SOCKET value with DB {item.get('Name')} backup"
-                print(text)
-                logging.info(text)
-            print(f"Using Host:{mysqlHost} User:{mysqlUser} Pass:{mysqlPass} Add:{additional}")
-            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {item.get('DB')} | gzip > {backup_file}"
-            result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
-            if "error" in str(result):
-                text = f"Some error while dumping Weekly DB Local backup of {item.get('Name')}. Error: {result.stderr}"
-                logging.error(text)
-                print(text)
-                send_to_telegram("🚒Error:",text)
-                continue
-            text = f"Weekly DB backup of {item.get('Name')} done successfully!"
-            print(text)
-            logging.info(text)
+            mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Other")
+    text = f"Weekly-Other Files and DB backups done successfully!"
+    print(text)
+    logging.info(text)
     finish_job("Weekly-Other")
 
 def show_help():
