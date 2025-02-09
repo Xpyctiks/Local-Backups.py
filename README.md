@@ -27,3 +27,5 @@ Installation:
 - In personal configuratoion blocks every value of Name is used for backup file name or db dump file name.  
 - Using key "DB" or "Folder" you are setting the type of backup.  
 - For type "DB" can be additionally set personal values of "User","Host","Port","Socket","Password".  
+- For all databases backup you can type for the key "DB" one of values: "ALL" or "FETCH". If "ALL" value is set - all databases in one file backups will be created. If "FETCH" - every database will be dumped as single one. But that function requires root access to make the script able to see all databases.  
+- Also if you launch any of DB backup from 0 to 12 hours (24h time) - the DB backup will contain "-morning" prefix. IF you launch the script again after 12:00 - another dump will be created with "-evening" prefix. That allows to make to copies of DB if you need.  

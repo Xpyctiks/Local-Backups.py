@@ -12,7 +12,7 @@ import subprocess
 
 CONFIG_FILE = os.path.expanduser(os.path.splitext(os.path.basename(__file__))[0]+".config.json")
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
-PID_FILE = os.path.splitext(os.path.basename(__file__))[0]+".pid"
+PID_FILE = os.path.join("/var/run/",os.path.splitext(os.path.basename(__file__))[0])[:-1]+".pid"
 LOCAL_BCKP_LIST = OTHER_BCKP_LIST = []
 TELEGRAM_TOKEN = TELEGRAM_CHATID = LOG_FOLDER = BCKP_FOLDER = BCKP_DEF_DB_HOST = BCKP_DEF_DB_PORT = BCKP_DEF_DB_SOCKET = BCKP_DEF_DB_USER = BCKP_DEF_DB_PASS = \
 DAILY_FOLDER = WEEKLY_FOLDER = CURR_FOLDER_NAME = ""
@@ -166,6 +166,13 @@ def interrupt_job(type):
     del_pid()
     sys.exit(1)
 
+def part_of_day():
+    now = datetime.now().hour
+    if 2 <= now < 12:
+        return "morning"
+    else:
+        return "evening"
+
 def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typeIn):
     text = f"Processing {typeIn} DB backup {nameIn} - DB name {dbIn} - TO folder {tofolderIn}"
     print(text)
@@ -173,7 +180,6 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     #checking if all necessary default variables for mysql are set
     if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
         print(f"Key is empty!")
-    backup_file = tofolderIn+"/"+nameIn+".sql.gz"
     #check what we use: default or personal credentials
     if hostIn:
         mysqlHost = hostIn
@@ -225,7 +231,12 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
         logging.info(text)
     #now check if ALL selected
     if dbIn == "ALL":
-        cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases.sql.gz"
+        if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
+            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases-morning.sql.gz"
+        elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
+            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases-evening.sql.gz"
+        else:
+            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases.sql.gz"
         result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
         if "error" in str(result):
             text = f"Some error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr}"
@@ -247,7 +258,12 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
         databases = [db for db in databases if db not in exclude_dbs]
         for db in databases:
             print(f"Creating dump for {db}...")
-            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}.sql.gz"
+            if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
+                cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-morning.sql.gz"
+            elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
+                cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-evening.sql.gz"
+            else:
+                cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}.sql.gz"
             result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
             if "error" in str(result):
                 text = f"Some error while dumping Daily FETCH DB backup of {db}. Error: {result.stderr}"
@@ -257,7 +273,15 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
                 continue
     #if individual database selected
     else:
-        cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
+        if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
+            backup_file = tofolderIn+"/"+nameIn+"-morning.sql.gz"
+            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
+        elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
+            backup_file = tofolderIn+"/"+nameIn+"-evening.sql.gz"
+            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
+        else:
+            backup_file = tofolderIn+"/"+nameIn+".sql.gz"
+            cmd = f"mysqldump -h{mysqlHost} -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
         result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
         if "error" in str(result):
             text = f"Some error while dumping Weekly DB backup of {nameIn}. Error: {result.stderr}"
@@ -280,7 +304,6 @@ def daily_local():
             text = f"Created new directory {os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)}"
             print(text)
             logging.info(text)
-    #start of main function - fetching list and makeing backups
     #Making full path to the destination folder
     TO_FOLDER = os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)
     #listing items, dividing them to Folder and DB versions
@@ -308,7 +331,6 @@ def weekly_local():
             text = f"Created new directory {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)}"
             print(text)
             logging.info(text)
-    #start of main function - fetching list and makeing backups
     #Making full path to the destination folder
     TO_FOLDER = os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)
     #listing items, dividing them to Folder and DB versions
@@ -373,7 +395,6 @@ def weekly_other():
         logging.info(text)
         send_to_telegram("🚒Error:",text)
         interrupt_job("Weekly-Other")
-    #start of main function - fetching list and makeing backups
     #listing items, dividing them to Folder and DB versions
     for item in OTHER_BCKP_LIST:
         #If there is Folder variable - doing backup of folder
