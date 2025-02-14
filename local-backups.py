@@ -10,7 +10,7 @@ from datetime import datetime
 import tarfile
 import subprocess
 
-CONFIG_FILE = os.path.expanduser(os.path.splitext(os.path.basename(__file__))[0]+".config.json")
+CONFIG_FILE = os.path.expanduser(os.path.splitext(os.path.abspath(__file__))[0]+".config.json")
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
 PID_FILE = os.path.join("/var/run/",os.path.splitext(os.path.basename(__file__))[0])[:-1]+".pid"
 LOCAL_BCKP_LIST = OTHER_BCKP_LIST = []
@@ -117,7 +117,7 @@ def load_config():
             text = f"Error while loading JSON config file - check structure and commas first of all. Error: {msg}"
             logging.error(text)
             print(text)
-            interrupt_job()
+            interrupt_job("General-Job")
     else:
         generate_default_config()
 
@@ -129,7 +129,7 @@ def check_pid():
             print(f"Another copy is running. Can't proceed.")
             logging.error("Previous copy is running. Can't proceed.")
             send_to_telegram("🚫Error!","Previous copy is running. Can't proceed.")
-            interrupt_job()
+            interrupt_job("General-Job")
     with open(PID_FILE, "w") as f:
         f.write(str(os.getpid()))
         return True
