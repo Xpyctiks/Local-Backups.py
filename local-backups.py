@@ -184,11 +184,11 @@ def create_sha256(folder):
     sha256_output_data = ""
     files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
     for file in files:
-        with open(file, "rb") as f:
+        with open(os.path.join(folder,file), "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(chunk)
         sha256_output_data += sha256_hash.hexdigest()+" "+file+"\n"
-    with open(sha256_output_file, "w") as f2:
+    with open(os.path.join(folder,sha256_output_file), "w") as f2:
         f2.write(sha256_output_data)
     text = f"SHA256 checksums for {folder} created successfully!"
     print(text)
