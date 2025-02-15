@@ -9,6 +9,7 @@ import requests
 from datetime import datetime
 import tarfile
 import subprocess
+import hashlib
 
 CONFIG_FILE = os.path.expanduser(os.path.splitext(os.path.abspath(__file__))[0]+".config.json")
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -177,6 +178,22 @@ def part_of_day():
     else:
         return "evening"
 
+def create_sha256(folder):
+    sha256_hash = hashlib.sha256()
+    sha256_output_file = os.path.join(folder,"sha256sum.txt")
+    sha256_output_data = ""
+    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+    for file in files:
+        with open(file, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(chunk)
+        sha256_output_data += sha256_hash.hexdigest()+" "+file+"\n"
+    with open(sha256_output_file, "w") as f2:
+        f2.write(sha256_output_data)
+    text = f"SHA256 checksums for {folder} created successfully!"
+    print(text)
+    logging.info(text)
+
 def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typeIn):
     text = f"Processing {typeIn} DB backup {nameIn} - DB name {dbIn} - TO folder {tofolderIn}"
     print(text)
@@ -310,6 +327,7 @@ def daily_local():
             text = f"Daily-Local DB backup of {item.get('Name')} done successfully!"
             print(text)
             logging.info(text)
+    create_sha256(TO_FOLDER)
     finish_job("Daily-Local")
 
 def weekly_local():
@@ -344,6 +362,7 @@ def weekly_local():
         #If there is DB variable - doing backup of DB
         elif item.get('DB'):
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Local")
+    create_sha256(TO_FOLDER)
     text = f"Weekly-Local Files and DB backups done successfully!"
     print(text)
     logging.info(text)
@@ -363,6 +382,7 @@ def daily_other():
                 print(text)
                 logging.info(text)
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
+    create_sha256(TO_FOLDER)
     text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
     print(text)
     logging.info(text)
@@ -408,6 +428,7 @@ def weekly_other():
                 print(text)
                 logging.info(text)
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Other")
+    create_sha256(TO_FOLDER)
     text = f"Weekly-Other Files and DB backups done successfully!"
     print(text)
     logging.info(text)
