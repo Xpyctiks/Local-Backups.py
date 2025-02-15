@@ -294,20 +294,12 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
             send_to_telegram("🚒Error:",text)
 
 def daily_local():
-    #check if the root backup folder with daily backup folder are accessable.
-    if not os.path.exists(os.path.join(BCKP_FOLDER,DAILY_FOLDER)):
-        text = f"Root folder for daily backups {os.path.join(BCKP_FOLDER,DAILY_FOLDER)} is not accessible! Interrupting!"
+    #if ok, check and create for the today's folder
+    if not os.path.exists(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)):
+        os.mkdir(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME),mode=0o770)
+        text = f"Created new directory {os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)}"
         print(text)
         logging.info(text)
-        send_to_telegram("🚒Error:",text)
-        interrupt_job("Daily-Local")
-    else:
-        #if ok, check and create for the today's folder
-        if not os.path.exists(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)):
-            os.mkdir(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME),mode=0o770)
-            text = f"Created new directory {os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)}"
-            print(text)
-            logging.info(text)
     #Making full path to the destination folder
     TO_FOLDER = os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)
     #listing items, dividing them to Folder and DB versions
@@ -321,20 +313,12 @@ def daily_local():
     finish_job("Daily-Local")
 
 def weekly_local():
-    #check if the root backup folder with daily backup folder are accessable.
-    if not os.path.exists(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER)):
-        text = f"Root folder for weekly backups {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER)} is not accessible! Interrupting!"
+    #if ok, check and create for the today's folder
+    if not os.path.exists(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)):
+        os.mkdir(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME),mode=0o770)
+        text = f"Created new directory {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)}"
         print(text)
         logging.info(text)
-        send_to_telegram("🚒Error:",text)
-        interrupt_job("Weekly-Local")
-    else:
-        #if ok, check and create for the today's folder
-        if not os.path.exists(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)):
-            os.mkdir(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME),mode=0o770)
-            text = f"Created new directory {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)}"
-            print(text)
-            logging.info(text)
     #Making full path to the destination folder
     TO_FOLDER = os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)
     #listing items, dividing them to Folder and DB versions
@@ -366,13 +350,6 @@ def weekly_local():
     finish_job("Weekly-Local")
 
 def daily_other():
-    #check if the root backup folder is accessable.
-    if not os.path.exists(BCKP_FOLDER):
-        text = f"Root folder for daily backups {BCKP_FOLDER} is not accessible! Interrupting!"
-        print(text)
-        logging.info(text)
-        send_to_telegram("🚒Error:",text)
-        interrupt_job("Daily-Other")
     #listing items, dividing them to Folder and DB versions
     for item in OTHER_BCKP_LIST:
         #If there is DB variable - doing backup of DB
@@ -392,13 +369,6 @@ def daily_other():
     finish_job("Daily-Other")
 
 def weekly_other():
-    #check if the root backup folder with daily backup folder are accessable.
-    if not os.path.exists(BCKP_FOLDER):
-        text = f"Root folder for weekly other backups {BCKP_FOLDER} is not accessible! Interrupting!"
-        print(text)
-        logging.info(text)
-        send_to_telegram("🚒Error:",text)
-        interrupt_job("Weekly-Other")
     #listing items, dividing them to Folder and DB versions
     for item in OTHER_BCKP_LIST:
         #If there is Folder variable - doing backup of folder
