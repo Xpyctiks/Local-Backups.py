@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/local/bin/python3.11
 
 import os
 import sys
@@ -260,7 +260,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
             cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases.sql.gz"
         result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
         if "error" in str(result):
-            text = f"Some error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr}"
+            text = f"Some error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr.strip()}"
             logging.error(text)
             print(text)
             send_to_telegram("🚒Error:",text)
@@ -272,26 +272,32 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
         cmd = f'mysql -u{mysqlUser} -p{mysqlPass} {additional} -e "SHOW DATABASES;"'
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         databases = result.stdout.strip().split("\n")[1:]
-        text = f"Total fetched databases: {databases}"
-        print(text)
-        logging.info(text)
-        exclude_dbs = {"information_schema", "performance_schema", "mysql", "sys"}
-        databases = [db for db in databases if db not in exclude_dbs]
-        for db in databases:
-            print(f"Creating dump for {db}...")
-            if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
-                cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-morning.sql.gz"
-            elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
-                cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-evening.sql.gz"
-            else:
-                cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}.sql.gz"
-            result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
-            if "error" in str(result):
-                text = f"Some error while dumping Daily FETCH DB backup of {db}. Error: {result.stderr}"
-                logging.error(text)
-                print(text)
-                send_to_telegram("🚒Error:",text)
-                continue
+        if len(databases) == 0:
+            text = f"No databases found in the server. Can't proceed with FETCH DB backup"
+            print(text)
+            logging.info(text)
+            send_to_telegram("🚒Error:",text)
+        else:
+            text = f"Total fetched databases: {databases}"
+            print(text)
+            logging.info(text)
+            exclude_dbs = {"information_schema", "performance_schema", "mysql", "sys"}
+            databases = [db for db in databases if db not in exclude_dbs]
+            for db in databases:
+                print(f"Creating dump for {db}...")
+                if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
+                    cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-morning.sql.gz"
+                elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
+                    cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-evening.sql.gz"
+                else:
+                    cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}.sql.gz"
+                result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
+                if "error" in str(result):
+                    text = f"Some error while dumping Daily FETCH DB backup of {db}. Error: {result.stderr.strip()}"
+                    logging.error(text)
+                    print(text)
+                    send_to_telegram("🚒Error:",text)
+                    continue
     #if individual database selected
     else:
         if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
@@ -305,7 +311,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
             cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
         result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
         if "error" in str(result):
-            text = f"Some error while dumping Weekly DB backup of {nameIn}. Error: {result.stderr}"
+            text = f"Some error while dumping Weekly DB backup of {nameIn}. Error: {result.stderr.strip()}"
             logging.error(text)
             print(text)
             send_to_telegram("🚒Error:",text)
@@ -354,7 +360,7 @@ def weekly_local():
                 logging.info(text)
                 print(text)
             except Exception as msg:
-                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg}"
+                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg.strip()}"
                 logging.error(text)
                 print(text)
                 send_to_telegram("🚒Error:",text)
@@ -413,7 +419,7 @@ def weekly_other():
                 print(text)
                 create_sha256(TO_FOLDER)
             except Exception as msg:
-                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg}"
+                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg.strip()}"
                 logging.error(text)
                 print(text)
                 send_to_telegram("🚒Error:",text)
