@@ -313,7 +313,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
 def daily_local():
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)):
-        os.mkdir(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME),mode=0o770)
+        os.makedirs(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
         text = f"Created new directory {os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)}"
         print(text)
         logging.info(text)
@@ -333,7 +333,7 @@ def daily_local():
 def weekly_local():
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)):
-        os.mkdir(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME),mode=0o770)
+        os.makedirs(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
         text = f"Created new directory {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)}"
         print(text)
         logging.info(text)
