@@ -253,11 +253,11 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     #now check if ALL selected
     if dbIn == "ALL":
         if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
-            cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases-morning.sql.gz"
+            cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases-morning.sql.gz"
         elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
-            cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases-evening.sql.gz"
+            cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases-evening.sql.gz"
         else:
-            cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/all-databases.sql.gz"
+            cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases.sql.gz"
         result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,text=True)
         if "error" in str(result):
             text = f"Some error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr}"
