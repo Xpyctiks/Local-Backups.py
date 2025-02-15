@@ -382,7 +382,7 @@ def daily_other():
                 print(text)
                 logging.info(text)
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
-    create_sha256(TO_FOLDER)
+            create_sha256(TO_FOLDER)
     text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
     print(text)
     logging.info(text)
@@ -411,6 +411,7 @@ def weekly_other():
                 text = f"Archive {TO_FOLDER+'/'+item.get('Name')+'.tar.gz'} created sucessfully!"
                 logging.info(text)
                 print(text)
+                create_sha256(TO_FOLDER)
             except Exception as msg:
                 text = f"Some error while packing folder {item.get('Folder')}. Error: {msg}"
                 logging.error(text)
@@ -428,7 +429,7 @@ def weekly_other():
                 print(text)
                 logging.info(text)
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Other")
-    create_sha256(TO_FOLDER)
+            create_sha256(TO_FOLDER)
     text = f"Weekly-Other Files and DB backups done successfully!"
     print(text)
     logging.info(text)
