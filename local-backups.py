@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.11
+#!/usr/local/bin/python3
 
 import os
 import sys
@@ -190,7 +190,7 @@ def create_sha256(folder):
         sha256_output_data += sha256_hash.hexdigest()+" "+file+"\n"
     with open(os.path.join(folder,sha256_output_file), "w") as f2:
         f2.write(sha256_output_data)
-    text = f"SHA256 checksums for {folder} created successfully!"
+    text = f"\tSHA256 checksums for {folder} created successfully!"
     print(text)
     logging.info(text)
 
@@ -200,9 +200,9 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     logging.info(text)
     #checking if all necessary default variables for mysql are set
     if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
-        print(f"Key is empty!")
+        print(f"\tKey is empty!")
     #check what we use: default or personal credentials
-    text2=""
+    text2=f"\t"
     if hostIn:
         mysqlHost = hostIn
         text2 += f"Using personal host: {hostIn}. "
@@ -222,14 +222,14 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     #if set both at the same time:
     if portIn and socketIn:
         additional = f"-S{socketIn}"
-        text = f"Both personal Socket and Port are defined. Taking Socket as high priority."
+        text = f"\tBoth personal Socket and Port are defined. Taking Socket as high priority."
         print(text)
         logging.info(text)
     #if not set both, trying to switch to default defined values
     elif not portIn and not socketIn:
         #if both default values are not set - sending alert
         if not BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
-            text = f"Neither default socket nor default port is set. Can't proceed with DB {nameIn} backup"
+            text = f"\tNeither default socket nor default port is set. Can't proceed with DB {nameIn} backup"
             print(text)
             logging.info(text)
             send_to_telegram("🚒Error:",text)
@@ -264,11 +264,11 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
             cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases.sql.gz"
         result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         if "error" in str(result):
-            text = f"Some error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr.strip()}"
+            text = f"\tSome error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr.strip()}"
             logging.error(text)
             print(text)
             send_to_telegram("🚒Error:",text)
-        text = f"Daily ALL DB Local backup of {nameIn} done successfully!"
+        text = f"\tDaily ALL DB Local backup of {nameIn} done successfully!"
         print(text)
         logging.info(text)
     #now check if FETCH selected
@@ -324,7 +324,7 @@ def daily_local():
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)):
         os.makedirs(os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
-        text = f"Created new directory {os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)}"
+        text = f"\tCreated new directory {os.path.join(BCKP_FOLDER,DAILY_FOLDER,CURR_FOLDER_NAME)}"
         print(text)
         logging.info(text)
     #Making full path to the destination folder
@@ -334,7 +334,7 @@ def daily_local():
         #If there is DB variable - doing backup of DB
         if item.get('DB'):
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Local")
-            text = f"Daily-Local DB backup of {item.get('Name')} done successfully!"
+            text = f"\tDaily-Local DB backup of {item.get('Name')} done successfully!"
             print(text)
             logging.info(text)
     create_sha256(TO_FOLDER)
@@ -344,7 +344,7 @@ def weekly_local():
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)):
         os.makedirs(os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
-        text = f"Created new directory {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)}"
+        text = f"\tCreated new directory {os.path.join(BCKP_FOLDER,WEEKLY_FOLDER,CURR_FOLDER_NAME)}"
         print(text)
         logging.info(text)
     #Making full path to the destination folder
@@ -373,7 +373,7 @@ def weekly_local():
         elif item.get('DB'):
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Local")
     create_sha256(TO_FOLDER)
-    text = f"Weekly-Local Files and DB backups done successfully!"
+    text = f"\tWeekly-Local Files and DB backups done successfully!"
     print(text)
     logging.info(text)
     finish_job("Weekly-Local")
@@ -388,12 +388,12 @@ def daily_other():
             #if ok, check and create for the today's folder
             if not os.path.exists(TO_FOLDER):
                 os.makedirs(TO_FOLDER,mode=0o770,exist_ok=True)
-                text = f"Created new directory {TO_FOLDER}"
+                text = f"\tCreated new directory {TO_FOLDER}"
                 print(text)
                 logging.info(text)
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
             create_sha256(TO_FOLDER)
-    text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
+    text = f"\tDaily-Other DB backup of {item.get('Name')} done successfully!"
     print(text)
     logging.info(text)
     finish_job("Daily-Other")
@@ -440,7 +440,7 @@ def weekly_other():
                 logging.info(text)
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Other")
             create_sha256(TO_FOLDER)
-    text = f"Weekly-Other Files and DB backups done successfully!"
+    text = f"\tWeekly-Other Files and DB backups done successfully!"
     print(text)
     logging.info(text)
     finish_job("Weekly-Other")
