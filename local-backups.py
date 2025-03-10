@@ -202,16 +202,20 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     if any(key in [None, "", "None"] for key in [BCKP_DEF_DB_HOST, BCKP_DEF_DB_USER, BCKP_DEF_DB_PASS]):
         print(f"Key is empty!")
     #check what we use: default or personal credentials
+    text2=""
     if hostIn:
         mysqlHost = hostIn
+        text2 += f"Using personal host: {hostIn} "
     else:
         mysqlHost = BCKP_DEF_DB_HOST
     if userIn:
         mysqlUser = userIn
+        text2 += f"Using personal user: {userIn} "
     else:
         mysqlUser = BCKP_DEF_DB_USER
     if passIn:
         mysqlPass = passIn
+        text2 += f"Using personal password "
     else:
         mysqlPass = BCKP_DEF_DB_PASS
     #check first of all for the personal defined parameters Socket and Port
@@ -231,23 +235,23 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
             send_to_telegram("🚒Error:",text)
         elif BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
             additional = f"-S{BCKP_DEF_DB_SOCKET}"
-            text = f"Using default SOCKET with DB {nameIn} backup"
+            text2 += f"Using default SOCKET with DB {nameIn} backup "
             print(text)
             logging.info(text)
         elif not BCKP_DEF_DB_SOCKET and BCKP_DEF_DB_PORT:
             additional = f"-h{mysqlHost} -P{BCKP_DEF_DB_PORT}"
-            text = f"Using default PORT with DB {nameIn} backup"
+            text2 += f"Using default PORT with DB {nameIn} backup "
             print(text)
             logging.info(text)
     #if set any of two personal values
     elif portIn and not socketIn:
         additional = f"-h{mysqlHost} -P{portIn}"
-        text = f"Using personal PORT value with DB {nameIn} backup"
+        text2 += f"Using personal PORT value with DB {nameIn} backup "
         print(text)
         logging.info(text)
     elif not portIn and socketIn:
         additional = f"-S{socketIn}"
-        text = f"Using personal SOCKET value with DB {nameIn} backup"
+        text2 += f"Using personal SOCKET value with DB {nameIn} backup "
         print(text)
         logging.info(text)
     #now check if ALL selected
