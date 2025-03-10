@@ -393,9 +393,9 @@ def daily_other():
                 logging.info(text)
             mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
             create_sha256(TO_FOLDER)
-    text = f"\tDaily-Other DB backup of {item.get('Name')} done successfully!"
-    print(text)
-    logging.info(text)
+            text = f"\tDaily-Other DB backup of {item.get('Name')} done successfully!"
+            print(text)
+            logging.info(text)
     finish_job("Daily-Other")
 
 def weekly_other():
