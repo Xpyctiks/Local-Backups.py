@@ -205,17 +205,17 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     text2=""
     if hostIn:
         mysqlHost = hostIn
-        text2 += f"Using personal host: {hostIn} "
+        text2 += f"Using personal host: {hostIn}. "
     else:
         mysqlHost = BCKP_DEF_DB_HOST
     if userIn:
         mysqlUser = userIn
-        text2 += f"Using personal user: {userIn} "
+        text2 += f"Using personal user: {userIn}. "
     else:
         mysqlUser = BCKP_DEF_DB_USER
     if passIn:
         mysqlPass = passIn
-        text2 += f"Using personal password "
+        text2 += f"Using personal password. "
     else:
         mysqlPass = BCKP_DEF_DB_PASS
     #check first of all for the personal defined parameters Socket and Port
@@ -236,24 +236,24 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
         elif BCKP_DEF_DB_SOCKET and not BCKP_DEF_DB_PORT:
             additional = f"-S{BCKP_DEF_DB_SOCKET}"
             text2 += f"Using default SOCKET with DB {nameIn} backup "
-            print(text)
-            logging.info(text)
+            print(text2)
+            logging.info(text2)
         elif not BCKP_DEF_DB_SOCKET and BCKP_DEF_DB_PORT:
             additional = f"-h{mysqlHost} -P{BCKP_DEF_DB_PORT}"
             text2 += f"Using default PORT with DB {nameIn} backup "
-            print(text)
-            logging.info(text)
+            print(text2)
+            logging.info(text2)
     #if set any of two personal values
     elif portIn and not socketIn:
         additional = f"-h{mysqlHost} -P{portIn}"
         text2 += f"Using personal PORT value with DB {nameIn} backup "
-        print(text)
-        logging.info(text)
+        print(text2)
+        logging.info(text2)
     elif not portIn and socketIn:
         additional = f"-S{socketIn}"
         text2 += f"Using personal SOCKET value with DB {nameIn} backup "
-        print(text)
-        logging.info(text)
+        print(text2)
+        logging.info(text2)
     #now check if ALL selected
     if dbIn == "ALL":
         if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
