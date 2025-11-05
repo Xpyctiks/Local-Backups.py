@@ -4,7 +4,6 @@ import os
 import sys
 import json
 import logging
-import logging.handlers
 import requests
 from datetime import datetime
 import tarfile
@@ -93,7 +92,7 @@ def load_config():
             for id,key in enumerate(config.keys()):
                 if not (key in ["telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder", "DefaultDbHost", "DefaultDbPort", "DefaultDbSocket","DefaultDbUser", "DefaultDbPass", "LocalServerBackups", "OtherBackups"]):
                     print(f"Important key {key} is absent in config file! Can't proceed")
-                    interrupt_job()
+                    interrupt_job("Program start")
             TELEGRAM_TOKEN = config.get('telegramToken').strip()
             TELEGRAM_CHATID = config.get('telegramChat').strip()
             LOG_FOLDER = config.get('logFolder').strip()
@@ -353,6 +352,13 @@ def weekly_local():
     for item in LOCAL_BCKP_LIST:
         #If there is Folder variable - doing backup of folder
         if item.get('Folder'):
+            #first of all check if the directory exists at all
+            if not os.path.exists(item.get('Folder')):
+                text = f"Weekly-Local: The directory {item.get('Folder')} doesn't exists! Skipping..."
+                print(text)
+                logging.error(text)
+                send_to_telegram("🚒Error:",text)
+                continue
             text = f"Processing files backup - FROM folder {item.get('Folder')} - TO folder {TO_FOLDER} - file {item.get('Name')}.tar.gz"
             print(text)
             logging.info(text)
@@ -364,7 +370,7 @@ def weekly_local():
                 logging.info(text)
                 print(text)
             except Exception as msg:
-                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg.strip()}"
+                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg}"
                 logging.error(text)
                 print(text)
                 send_to_telegram("🚒Error:",text)
@@ -403,6 +409,13 @@ def weekly_other():
     for item in OTHER_BCKP_LIST:
         #If there is Folder variable - doing backup of folder
         if item.get('Folder'):
+            #first of all check if the directory exists at all
+            if not os.path.exists(item.get('Folder')):
+                text = f"Weekly-Other: The directory {item.get('Folder')} doesn't exists! Skipping..."
+                print(text)
+                logging.error(text)
+                send_to_telegram("🚒Error:",text)
+                continue
             #Making full path to the destination folder
             TO_FOLDER = os.path.join(BCKP_FOLDER,item.get('Name'),WEEKLY_FOLDER,CURR_FOLDER_NAME)
             #if ok, check and create for the today's folder
@@ -423,7 +436,7 @@ def weekly_other():
                 print(text)
                 create_sha256(TO_FOLDER)
             except Exception as msg:
-                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg.strip()}"
+                text = f"Some error while packing folder {item.get('Folder')}. Error: {msg}"
                 logging.error(text)
                 print(text)
                 send_to_telegram("🚒Error:",text)
