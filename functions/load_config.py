@@ -1,4 +1,6 @@
-import logging,os,json
+import logging
+import os
+import json
 from datetime import datetime
 from functions.func import interrupt_job
 from functions import variables
@@ -10,8 +12,12 @@ def load_config():
       with open(variables.CONFIG_FILE, 'r',encoding='utf8') as file:
         config = json.load(file)
       #Check if all parameters are set. If not - shows the error message
-      for id,key in enumerate(config.keys()):
-        if not (key in ["telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder", "DefaultDbHost", "DefaultDbPort", "DefaultDbSocket","DefaultDbUser", "DefaultDbPass", "LocalServerBackups", "OtherBackups"]):
+      REQUIRED_KEYS = [
+        "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder", "DefaultDbHost", "DefaultDbPort",
+        "DefaultDbSocket", "DefaultDbUser", "DefaultDbPass", "LocalServerBackups", "OtherBackups" 
+      ]
+      for key in REQUIRED_KEYS:
+        if key not in config:
           print(f"Important key {key} is absent in config file! Can't proceed")
           interrupt_job("Program start")
       variables.TELEGRAM_TOKEN = config.get('telegramToken').strip()

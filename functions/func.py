@@ -1,4 +1,7 @@
-import os,logging,sys,hashlib
+import os
+import logging
+import sys
+import hashlib
 from datetime import datetime
 from functions.send_to_telegram import send_to_telegram
 from functions import variables

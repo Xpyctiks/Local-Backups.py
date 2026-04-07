@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 
-import os,sys
+import os
+import sys
 from functions.load_config import load_config
 from functions.daily import daily_local,daily_other
 from functions.weekly import weekly_local,weekly_other

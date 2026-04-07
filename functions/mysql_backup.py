@@ -1,10 +1,12 @@
-import logging,subprocess
+import logging
+import subprocess
 from functions.send_to_telegram import send_to_telegram
 from functions.func import part_of_day
 from functions import variables
 
 def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typeIn):
   text = f"Processing {typeIn} DB backup {nameIn} - DB name {dbIn} - TO folder {tofolderIn}"
+  additional = ""
   print(text)
   logging.info(text)
   #checking if all necessary default variables for mysql are set
@@ -72,7 +74,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     else:
       cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases.sql.gz"
     result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-    if "error" in str(result):
+    if result.returncode != 0:
       text = f"\tSome error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr.strip()}"
       logging.error(text)
       print(text)
@@ -105,7 +107,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
         else:
           cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}.sql.gz"
         result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-        if "error" in str(result):
+        if result.returncode != 0:
           text = f"Some error while dumping Daily FETCH DB backup of {db}. Error: {result.stderr.strip()}"
           logging.error(text)
           print(text)
@@ -123,7 +125,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       backup_file = tofolderIn+"/"+nameIn+".sql.gz"
       cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
     result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-    if "error" in str(result):
+    if result.returncode != 0:
       text = f"Some error while dumping Weekly DB backup of {nameIn}. Error: {result.stderr.strip()}"
       logging.error(text)
       print(text)

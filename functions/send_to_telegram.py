@@ -1,4 +1,7 @@
-import logging,httpx,threading,os
+import logging
+import httpx
+import threading
+import os
 from functions import variables
 
 def send_to_telegram_func(message: str, chatid: str, token: str, subject: str) -> None:

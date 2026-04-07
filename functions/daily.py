@@ -1,4 +1,5 @@
-import os,logging
+import os
+import logging
 from functions.func import create_sha256,finish_job
 from functions.mysql_backup import mysql_backup
 from functions import variables

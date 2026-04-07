@@ -1,4 +1,6 @@
-import os,logging,tarfile
+import os
+import logging
+import tarfile
 from functions.send_to_telegram import send_to_telegram
 from functions.func import create_sha256,finish_job
 from functions.mysql_backup import mysql_backup
@@ -74,9 +76,9 @@ def weekly_other():
       logging.info(text)
       try:
         #creating TAR.GZ archive where the file's name is taken from Name variable.
-        with tarfile.open(TO_FOLDER+"/"+item.get('Name')+".tar.gz", "w:gz") as tar:
+        with tarfile.open(os.path.join(TO_FOLDER,item.get('Name'),".tar.gz"), "w:gz") as tar:
             tar.add(item.get('Folder'))
-        text = f"Archive {TO_FOLDER+'/'+item.get('Name')+'.tar.gz'} created sucessfully!"
+        text = f"Archive {os.path.join(TO_FOLDER,item.get('Name'),".tar.gz")} created sucessfully!"
         logging.info(text)
         print(text)
         create_sha256(TO_FOLDER)
