@@ -24,4 +24,6 @@ def send_to_telegram(message: str, subject: str = "Local-Backups"):
   chatid = variables.TELEGRAM_CHATID
   token = variables.TELEGRAM_TOKEN
   subj = f"{subject}[{variables.HOSTNAME}]"
-  threading.Thread(target=send_to_telegram_func,args=(message,chatid,token,subj),daemon=True).start()
+  t = threading.Thread(target=send_to_telegram_func,args=(message,chatid,token,subj),daemon=True)
+  t.start()
+  t.join(timeout=10)
