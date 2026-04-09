@@ -7,6 +7,12 @@ from functions.send_to_telegram import send_to_telegram
 
 def daily_local():
   try:
+    if len(variables.LOCAL_BCKP_LIST) < 2:
+      text = "Daily-Local: empty config for this type of job"
+      logging.info(text)
+      print(text)
+      send_to_telegram("⚠"+text)
+      finish_job("Daily-Local")
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(variables.BCKP_FOLDER,variables.DAILY_FOLDER,variables.CURR_FOLDER_NAME)):
       os.makedirs(os.path.join(variables.BCKP_FOLDER,variables.DAILY_FOLDER,variables.CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
@@ -31,6 +37,12 @@ def daily_local():
 
 def daily_other():
   try:
+    if len(variables.OTHER_BCKP_LIST) < 2:
+      text = "Daily-Other: empty config for this type of job"
+      logging.info(text)
+      print(text)
+      send_to_telegram("⚠"+text)
+      finish_job("Daily-Other")
     #listing items, dividing them to Folder and DB versions
     for item in variables.OTHER_BCKP_LIST:
       #If there is DB variable - doing backup of DB

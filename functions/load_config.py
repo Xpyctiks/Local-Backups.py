@@ -1,16 +1,18 @@
 import logging
 import os
 import json
+import re
 from datetime import datetime
 from functions.func import interrupt_job
 from functions import variables
+from functions.send_to_telegram import send_to_telegram
 
 def load_config():
   #Check if config file exists. If not - generate the new one.
   if os.path.exists(variables.CONFIG_FILE):
     try:
       with open(variables.CONFIG_FILE, 'r',encoding='utf8') as file:
-        config = json.load(file)
+        config = json.load(file)     
       #Check if all parameters are set. If not - shows the error message
       REQUIRED_KEYS = [
         "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder", "DefaultDbHost", "DefaultDbPort",
@@ -23,17 +25,6 @@ def load_config():
       variables.TELEGRAM_TOKEN = config.get('telegramToken').strip()
       variables.TELEGRAM_CHATID = config.get('telegramChat').strip()
       variables.LOG_FOLDER = config.get('logFolder').strip()
-      variables.DAILY_FOLDER = config.get('dailyFolder').strip()
-      variables.WEEKLY_FOLDER = config.get('weeklyFolder').strip()
-      variables.BCKP_FOLDER = config.get('backupFolder').strip()
-      variables.BCKP_DEF_DB_HOST = config.get('DefaultDbHost').strip()
-      variables.BCKP_DEF_DB_PORT = config.get('DefaultDbPort').strip()
-      variables.BCKP_DEF_DB_SOCKET = config.get('DefaultDbSocket').strip()
-      variables.BCKP_DEF_DB_USER = config.get('DefaultDbUser').strip()
-      variables.BCKP_DEF_DB_PASS = config.get('DefaultDbPass').strip()
-      variables.LOCAL_BCKP_LIST = config.get('LocalServerBackups', [])
-      variables.OTHER_BCKP_LIST = config.get('OtherBackups', [])
-      variables.HOSTNAME = os.uname().nodename
       if not os.path.exists(variables.LOG_FOLDER):
         os.makedirs(variables.LOG_FOLDER,mode=0o770,exist_ok=True)
         text = f"Created new directory {variables.LOG_FOLDER}"
@@ -42,14 +33,26 @@ def load_config():
       LOG_FILE=os.path.join(variables.LOG_FOLDER,LOG_FILE_NAME)
       logging.basicConfig(filename=LOG_FILE,level=logging.INFO,format='%(asctime)s - Local-Backups - %(levelname)s - %(message)s',datefmt='%d-%m-%Y %H:%M:%S')
       logging.getLogger("httpx").setLevel(logging.WARNING)
+      variables.DAILY_FOLDER = config.get('dailyFolder').strip()
+      variables.WEEKLY_FOLDER = config.get('weeklyFolder').strip()
+      variables.BCKP_FOLDER = config.get('backupFolder').strip()
       if not os.path.exists(variables.BCKP_FOLDER):
         os.makedirs(variables.BCKP_FOLDER,mode=0o770,exist_ok=True)
         text = f"Created new directory {variables.BCKP_FOLDER}"
         print(text)
+      variables.BCKP_DEF_DB_HOST = config.get('DefaultDbHost').strip()
+      variables.BCKP_DEF_DB_PORT = config.get('DefaultDbPort').strip()
+      variables.BCKP_DEF_DB_SOCKET = config.get('DefaultDbSocket').strip()
+      variables.BCKP_DEF_DB_USER = config.get('DefaultDbUser').strip()
+      variables.BCKP_DEF_DB_PASS = config.get('DefaultDbPass').strip()
+      variables.LOCAL_BCKP_LIST = config.get('LocalServerBackups', [])
+      variables.OTHER_BCKP_LIST = config.get('OtherBackups', [])
+      variables.HOSTNAME = os.uname().nodename
     except Exception as msg:
       text = f"Error while loading JSON config file - check structure and commas first of all. Error: {msg}"
       logging.error(text)
       print(text)
+      send_to_telegram(text)
       interrupt_job("General-Job")
   else:
     generate_default_config()

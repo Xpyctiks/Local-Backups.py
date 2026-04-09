@@ -8,6 +8,12 @@ from functions import variables
 
 def weekly_local():
   try:
+    if len(variables.LOCAL_BCKP_LIST) < 2:
+      text = "Weekly-Local: empty config for this type of job"
+      logging.info(text)
+      print(text)
+      send_to_telegram("⚠"+text)
+      finish_job("Weekly-Local")
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME)):
       os.makedirs(os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
@@ -57,6 +63,12 @@ def weekly_local():
 
 def weekly_other():
   try:
+    if len(variables.OTHER_BCKP_LIST) < 2:
+      text = "Weekly-Other: empty config for this type of job"
+      logging.info(text)
+      print(text)
+      send_to_telegram("⚠"+text)
+      finish_job("Weekly-Other")
     #listing items, dividing them to Folder and DB versions
     for item in variables.OTHER_BCKP_LIST:
       #If there is Folder variable - doing backup of folder
