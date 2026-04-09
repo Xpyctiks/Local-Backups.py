@@ -3,7 +3,7 @@ import logging
 from functions.func import create_sha256,finish_job
 from functions.mysql_backup import mysql_backup
 from functions import variables
-from send_to_telegram import send_to_telegram
+from functions.send_to_telegram import send_to_telegram
 
 def daily_local():
   try:
