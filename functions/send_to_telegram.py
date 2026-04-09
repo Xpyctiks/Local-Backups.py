@@ -1,7 +1,6 @@
 import logging
 import httpx
 import threading
-import os
 from functions import variables
 
 def send_to_telegram_func(message: str, chatid: str, token: str, subject: str) -> None:
@@ -25,4 +24,4 @@ def send_to_telegram(message: str, subject: str = "Local-Backups"):
   chatid = variables.TELEGRAM_CHATID
   token = variables.TELEGRAM_TOKEN
   subj = f"{subject}[{variables.HOSTNAME}]"
-  threading.Thread(target=send_to_telegram_func,args=(message,chatid,token,subj)).start()
+  threading.Thread(target=send_to_telegram_func,args=(message,chatid,token,subj),daemon=True).start()
