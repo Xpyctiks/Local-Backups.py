@@ -93,9 +93,9 @@ def weekly_other():
         logging.info(text)
         try:
           #creating TAR.GZ archive where the file's name is taken from Name variable.
-          with tarfile.open(os.path.join(TO_FOLDER,item.get('Name'),".tar.gz"), "w:gz") as tar:
+          with tarfile.open(os.path.join(TO_FOLDER,item.get('Name')+".tar.gz"), "w:gz") as tar:
             tar.add(item.get('Folder'), filter=lambda t: None if "log" in t.name.replace('\\', '/').split('/') else t)
-          text = f"Archive {os.path.join(TO_FOLDER,item.get('Name'),'.tar.gz')} created sucessfully!"
+          text = f"Archive {os.path.join(TO_FOLDER,item.get('Name')+'.tar.gz')} created sucessfully!"
           logging.info(text)
           print(text)
           create_sha256(TO_FOLDER)
