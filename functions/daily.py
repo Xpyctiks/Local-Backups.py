@@ -33,7 +33,7 @@ def daily_local():
     finish_job("Daily-Local")
   except Exception as msg:
     logging.error(f"Daily-Local: Global error {msg}")
-    send_to_telegram(f"Daily-Local: Global error {msg}")
+    send_to_telegram(f"🚨Daily-Local: Global error {msg}")
 
 def daily_other():
   try:
@@ -63,4 +63,4 @@ def daily_other():
     finish_job("Daily-Other")
   except Exception as msg:
     logging.error(f"Daily-Other: Global error {msg}")
-    send_to_telegram(f"Daily-Other: Global error {msg}")
+    send_to_telegram(f"🚨Daily-Other: Global error {msg}")

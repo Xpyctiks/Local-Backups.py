@@ -44,7 +44,7 @@ def weekly_local():
           logging.info(text)
           print(text)
         except Exception as msg:
-          text = f"Some error while packing folder {item.get('Folder')}. Error: {msg}"
+          text = f"🚨Some error while packing folder {item.get('Folder')}. Error: {msg}"
           logging.error(text)
           print(text)
           send_to_telegram(text)
@@ -59,7 +59,7 @@ def weekly_local():
     finish_job("Weekly-Local")
   except Exception as msg:
     logging.error(f"Weekly-Local: Global error {msg}")
-    send_to_telegram(f"Weekly-Local: Global error {msg}")
+    send_to_telegram(f"🚨Weekly-Local: Global error {msg}")
 
 def weekly_other():
   try:
@@ -100,7 +100,7 @@ def weekly_other():
           print(text)
           create_sha256(TO_FOLDER)
         except Exception as msg:
-          text = f"Some error while packing folder {item.get('Folder')}. Error: {msg}"
+          text = f"🚨Some error while packing folder {item.get('Folder')}. Error: {msg}"
           logging.error(text)
           print(text)
           send_to_telegram(text)
@@ -123,4 +123,4 @@ def weekly_other():
     finish_job("Weekly-Other")
   except Exception as msg:
     logging.error(f"Weekly-Local: Global error {msg}")
-    send_to_telegram(f"Weekly-Local: Global error {msg}")
+    send_to_telegram(f"🚨Weekly-Local: Global error {msg}")
