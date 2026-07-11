@@ -16,7 +16,7 @@ def load_config():
       #Check if all parameters are set. If not - shows the error message
       REQUIRED_KEYS = [
         "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder", "DefaultDbHost", "DefaultDbPort",
-        "DefaultDbSocket", "DefaultDbUser", "DefaultDbPass", "LocalServerBackups", "OtherBackups" 
+        "DefaultDbSocket", "DefaultDbUser", "DefaultDbPass", "LocalServerBackups", "OtherBackups", "User", "Group"
       ]
       for key in REQUIRED_KEYS:
         if key not in config:
@@ -45,6 +45,8 @@ def load_config():
       variables.BCKP_DEF_DB_SOCKET = config.get('DefaultDbSocket').strip()
       variables.BCKP_DEF_DB_USER = config.get('DefaultDbUser').strip()
       variables.BCKP_DEF_DB_PASS = config.get('DefaultDbPass').strip()
+      variables.USER = config.get('User').strip()
+      variables.GROUP = config.get('Group').strip()
       variables.LOCAL_BCKP_LIST = config.get('LocalServerBackups', [])
       variables.OTHER_BCKP_LIST = config.get('OtherBackups', [])
       variables.HOSTNAME = os.uname().nodename
@@ -70,6 +72,8 @@ def generate_default_config():
     "DefaultDbSocket": "",
     "DefaultDbUser": "root",
     "DefaultDbPass": "123Passw0rd123",
+    "User": "root",
+    "Group": "root",
     "LocalServerBackups" : [
       {
         "Name": "server-etc",

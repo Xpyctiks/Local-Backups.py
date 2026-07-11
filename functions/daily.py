@@ -1,6 +1,6 @@
 import os
 import logging
-from functions.func import create_sha256,finish_job
+from functions.func import create_sha256,finish_job,chown,interrupt_job
 from functions.mysql_backup import mysql_backup
 from functions import variables
 from functions.send_to_telegram import send_to_telegram
@@ -29,8 +29,11 @@ def daily_local():
         text = f"\tDaily-Local DB backup of {item.get('Name')} done successfully!"
         print(text)
         logging.info(text)
-    create_sha256(TO_FOLDER)
-    finish_job("Daily-Local")
+    if create_sha256(TO_FOLDER) and chown(TO_FOLDER):
+      finish_job("Daily-Local")
+    else:
+      send_to_telegram(f"⚠ Daily-Local: error! Check logs! ")  
+      interrupt_job("Daily-Local")
   except Exception as msg:
     logging.error(f"Daily-Local: Global error {msg}")
     send_to_telegram(f"🚨Daily-Local: Global error {msg}")
@@ -56,7 +59,9 @@ def daily_other():
           print(text)
           logging.info(text)
         mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
-        create_sha256(TO_FOLDER)
+        if not create_sha256(TO_FOLDER) or not chown(TO_FOLDER):
+          send_to_telegram(f"⚠ Daily-Other: error! Check logs! ")  
+          interrupt_job("Daily-Other")
         text = f"\tDaily-Other DB backup of {item.get('Name')} done successfully!"
         print(text)
         logging.info(text)
