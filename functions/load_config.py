@@ -53,7 +53,7 @@ def _seed_defaults() -> None:
     id=1,
     telegramToken="",
     telegramChat="",
-    logFolder=os.path.join(os.path.expanduser(os.getcwd()),'Log','000-general.log'),
+    logFolder=os.path.join(os.path.expanduser(os.getcwd()),'Log'),
     dailyFolder="Daily",
     weeklyFolder="Weekly",
     backupFolder=os.path.join(os.path.expanduser(os.getcwd()),'Backups'),
@@ -102,7 +102,7 @@ def load_config(app: Flask) -> None:
       os.makedirs(variables.LOG_FOLDER,mode=0o770,exist_ok=True)
       text = f"Created new directory {variables.LOG_FOLDER}"
       print(text)
-    logging.basicConfig(filename=settings.logFolder,level=logging.INFO,format='%(asctime)s - Local-Backups-Web - %(levelname)s - %(message)s',datefmt='%d-%m-%Y %H:%M:%S')
+    logging.basicConfig(filename=os.path.join(settings.logFolder,'000-general.log'),level=logging.INFO,format='%(asctime)s - Local-Backups-Web - %(levelname)s - %(message)s',datefmt='%d-%m-%Y %H:%M:%S')
     logging.getLogger("httpx").setLevel(logging.WARNING)
     variables.DAILY_FOLDER = settings.dailyFolder
     variables.WEEKLY_FOLDER = settings.weeklyFolder
