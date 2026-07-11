@@ -1,11 +1,9 @@
 import os
-import json
 import logging
 import secrets
-from datetime import datetime
 from flask import Flask
 from db.db import db
-from db.database import Settings, BackupJob, User, BACKUP_NAME_PATTERN
+from db.database import Settings, BackupJob, User
 from functions import variables
 from functions.func import interrupt_job
 
@@ -41,15 +39,13 @@ def generate_default_config(app: Flask) -> bool:
     db.create_all()
     if fresh:
       migrated = False
-      if os.path.exists(variables.CONFIG_FILE):
-        migrated = _migrate_legacy_json()
       if not migrated:
         _seed_defaults()
       _seed_admin_user()
       db.session.commit()
-      logging.info(f"Migration from old JSON to the DB done!")
+      logging.info(f"Kickstart: No DB already exsits! Creating the new one...")
     else:
-      logging.info(f"Kickstart: DB already exsits! using it.")
+      logging.info(f"Kickstart: DB already exsits! Using it...")
   return fresh
 
 def _seed_defaults() -> None:
@@ -74,66 +70,6 @@ def _seed_defaults() -> None:
   db.session.add(settings)
   text = f"First launch. Database initialized with default settings at {variables.DB_FILE}. Configure it via the web admin panel, then add backup jobs on the main page."
   print(text)
-
-def _migrate_legacy_json() -> bool:
-  #Attempts to migrate the legacy config.json into the database. Returns False (and leaves nothing committed) if the file is invalid.
-  try:
-    with open(variables.CONFIG_FILE, 'r', encoding='utf8') as file:
-      config = json.load(file)
-    for key in REQUIRED_LEGACY_KEYS:
-      if key not in config:
-        print(f"Legacy config.json is missing key '{key}' - skipping automatic migration, default settings will be seeded instead.")
-        return False
-    settings = Settings(
-      id=1,
-      telegramToken=(config.get('telegramToken') or '').strip(),
-      telegramChat=(config.get('telegramChat') or '').strip(),
-      logFolder=(config.get('logFolder') or '').strip(),
-      dailyFolder=(config.get('dailyFolder') or '').strip(),
-      weeklyFolder=(config.get('weeklyFolder') or '').strip(),
-      backupFolder=(config.get('backupFolder') or '').strip(),
-      defaultDbHost=(config.get('DefaultDbHost') or '').strip(),
-      defaultDbPort=(config.get('DefaultDbPort') or '').strip(),
-      defaultDbSocket=(config.get('DefaultDbSocket') or '').strip(),
-      defaultDbUser=(config.get('DefaultDbUser') or '').strip(),
-      defaultDbPass=(config.get('DefaultDbPass') or '').strip(),
-      osUser=(config.get('User') or 'root').strip(),
-      osGroup=(config.get('Group') or 'root').strip(),
-      sessionKey=secrets.token_hex(32),
-      autheliaLogoutUrl="",
-    )
-    db.session.add(settings)
-    migrated_count = 0
-    for scope, items_key in (("Local", "LocalServerBackups"), ("Other", "OtherBackups")):
-      for item in config.get(items_key, []):
-        job = _legacy_item_to_job(item, scope)
-        if job is None:
-          print(f"Skipping legacy {items_key} item {item!r}: no valid Name/Folder/DB found.")
-          continue
-        db.session.add(job)
-        migrated_count += 1
-        print(f"Migrated legacy backup job '{job.name}' ({scope}) from config.json.")
-    print(f"Legacy config.json migrated into the database: {migrated_count} backup job(s) created. The original config.json was left untouched on disk as a fallback.")
-    return True
-  except Exception as msg:
-    print(f"Error migrating legacy config.json: {msg}. Default settings will be seeded instead.")
-    db.session.rollback()
-    return False
-
-def _legacy_item_to_job(item: dict, scope: str):
-  name = str(item.get('Name') or '').strip()
-  if not name or not BACKUP_NAME_PATTERN.match(name):
-    return None
-  if item.get('Folder'):
-    return BackupJob(name=name, scope=scope, folder=item.get('Folder'))
-  if item.get('DB'):
-    return BackupJob(
-      name=name, scope=scope, db_name=item.get('DB'),
-      dbUser=item.get('User') or None, dbHost=item.get('Host') or None,
-      dbSocket=item.get('Socket') or None, dbPort=item.get('Port') or None,
-      dbPassword=item.get('Password') or None,
-    )
-  return None
 
 def _seed_admin_user() -> None:
   password = secrets.token_urlsafe(15)

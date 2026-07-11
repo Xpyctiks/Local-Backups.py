@@ -1,7 +1,6 @@
 import os
 
 CONFIG_DIR = "/etc/local-backups.py/"
-CONFIG_FILE = os.path.join(CONFIG_DIR,"config.json")
 DB_FILE = os.path.join(CONFIG_DIR,"local-backups.db")
 INITIAL_ADMIN_PASSWORD_FILE = os.path.join(CONFIG_DIR,"initial_admin_password.txt")
 PID_FILE = os.path.join("/var/run/","local-backups.pid")
