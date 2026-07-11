@@ -102,8 +102,9 @@ def load_config(app: Flask) -> None:
       os.makedirs(variables.LOG_FOLDER,mode=0o770,exist_ok=True)
       text = f"Created new directory {variables.LOG_FOLDER}"
       print(text)
-    logging.basicConfig(filename=os.path.join(settings.logFolder,'000-general.log'),level=logging.INFO,format='%(asctime)s - Local-Backups-Web - %(levelname)s - %(message)s',datefmt='%d-%m-%Y %H:%M:%S')
+    logging.basicConfig(filename=os.path.join(variables.LOG_FOLDER,'000-general.log'),level=logging.INFO,format='%(asctime)s - Local-Backups-Web - %(levelname)s - %(message)s',datefmt='%d-%m-%Y %H:%M:%S',force=True)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
     variables.DAILY_FOLDER = settings.dailyFolder
     variables.WEEKLY_FOLDER = settings.weeklyFolder
     variables.BCKP_FOLDER = settings.backupFolder
