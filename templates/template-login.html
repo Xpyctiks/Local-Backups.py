@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - Local-Backups</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <div class="login-wrap">
+    <div class="panel login-card">
+      <h1>Local-Backups</h1>
+      <form action="/login/" method="POST">
+        <label>Username
+          <input type="text" name="username" required autofocus>
+        </label>
+        <label>Password
+          <input type="password" name="password" required>
+        </label>
+        <button type="submit">Log in</button>
+      </form>
+      <div class="login-sso">
+        <a href="/login/authelia/">Log in via SSO (Authelia)</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backups - Local-Backups</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  {% include "_nav.html" %}
+  <div class="container">
+    <div class="panel">
+      <h1>Local Server Backups</h1>
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for job in local_jobs %}
+          <tr>
+            <td>{{ job.name }}</td>
+            <td>{{ "Folder" if job.folder else "Database" }}</td>
+            <td>{{ job.folder if job.folder else job.db_name }}</td>
+            <td>{{ "Enabled" if job.enabled else "Disabled" }}</td>
+            <td>
+              <form action="/backups/{{ job.id }}/toggle" method="POST" class="inline-form">
+                <button type="submit">{{ "Disable" if job.enabled else "Enable" }}</button>
+              </form>
+              <form action="/backups/{{ job.id }}/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete backup job {{ job.name }}?');">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">No local backup jobs configured yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h1>Other Backups</h1>
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for job in other_jobs %}
+          <tr>
+            <td>{{ job.name }}</td>
+            <td>{{ "Folder" if job.folder else "Database" }}</td>
+            <td>{{ job.folder if job.folder else job.db_name }}</td>
+            <td>{{ "Enabled" if job.enabled else "Disabled" }}</td>
+            <td>
+              <form action="/backups/{{ job.id }}/toggle" method="POST" class="inline-form">
+                <button type="submit">{{ "Disable" if job.enabled else "Enable" }}</button>
+              </form>
+              <form action="/backups/{{ job.id }}/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete backup job {{ job.name }}?');">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">No other backup jobs configured yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>Add New Backup Job</h2>
+      <form action="/backups/add" method="POST" id="add-backup-form">
+        <label>Scope
+          <select name="scope">
+            <option value="Local">Local Server</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>Name
+          <input type="text" name="name" required pattern="[A-Za-z0-9 _.\-]+" title="Letters, numbers, spaces, dots, underscores and hyphens only">
+        </label>
+        <fieldset>
+          <legend>Type</legend>
+          <label><input type="radio" name="job_type" value="folder" checked onchange="toggleJobType()"> Folder</label>
+          <label><input type="radio" name="job_type" value="db" onchange="toggleJobType()"> Database</label>
+        </fieldset>
+        <div id="folder-fields">
+          <label>Folder path
+            <input type="text" name="folder" placeholder="/etc">
+          </label>
+        </div>
+        <div id="db-fields" style="display:none;">
+          <label>Database name (or ALL / FETCH)
+            <input type="text" name="db" placeholder="mydatabase">
+          </label>
+          <label>Host (optional, overrides default)
+            <input type="text" name="dbHost">
+          </label>
+          <label>User (optional, overrides default)
+            <input type="text" name="dbUser">
+          </label>
+          <label>Password (optional, overrides default)
+            <input type="password" name="dbPassword">
+          </label>
+          <label>Socket (optional, overrides default)
+            <input type="text" name="dbSocket">
+          </label>
+          <label>Port (optional, overrides default)
+            <input type="text" name="dbPort">
+          </label>
+        </div>
+        <button type="submit">Add Backup Job</button>
+      </form>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel - Local-Backups</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  {% include "_nav.html" %}
+  <div class="container">
+    <div class="tabs">
+      <a href="/admin_panel/settings/" class="{{ 'active' if tab == 'settings' else '' }}">Settings</a>
+      <a href="/admin_panel/users/" class="{{ 'active' if tab == 'users' else '' }}">Users</a>
+    </div>
+    {% if tab == 'settings' %}
+    <div class="panel">
+      <h1>Settings</h1>
+      <form action="/admin_panel/settings/" method="POST">
+        <label>Telegram Bot Token
+          <input type="text" name="telegramToken" value="{{ settings.telegramToken or '' }}">
+        </label>
+        <label>Telegram Chat ID
+          <input type="text" name="telegramChat" value="{{ settings.telegramChat or '' }}">
+        </label>
+        <label>Log Folder
+          <input type="text" name="logFolder" value="{{ settings.logFolder or '' }}" required>
+        </label>
+        <label>Daily Folder Name
+          <input type="text" name="dailyFolder" value="{{ settings.dailyFolder or '' }}" required>
+        </label>
+        <label>Weekly Folder Name
+          <input type="text" name="weeklyFolder" value="{{ settings.weeklyFolder or '' }}" required>
+        </label>
+        <label>Backup Folder
+          <input type="text" name="backupFolder" value="{{ settings.backupFolder or '' }}" required>
+        </label>
+        <label>Default DB Host
+          <input type="text" name="defaultDbHost" value="{{ settings.defaultDbHost or '' }}">
+        </label>
+        <label>Default DB Port
+          <input type="text" name="defaultDbPort" value="{{ settings.defaultDbPort or '' }}">
+        </label>
+        <label>Default DB Socket
+          <input type="text" name="defaultDbSocket" value="{{ settings.defaultDbSocket or '' }}">
+        </label>
+        <label>Default DB User
+          <input type="text" name="defaultDbUser" value="{{ settings.defaultDbUser or '' }}">
+        </label>
+        <label>Default DB Password
+          <input type="password" name="defaultDbPass" value="{{ settings.defaultDbPass or '' }}">
+        </label>
+        <label>OS User (used for chown of backup files)
+          <input type="text" name="osUser" value="{{ settings.osUser or '' }}">
+        </label>
+        <label>OS Group (used for chown of backup files)
+          <input type="text" name="osGroup" value="{{ settings.osGroup or '' }}">
+        </label>
+        <label>Authelia Logout URL (optional)
+          <input type="text" name="autheliaLogoutUrl" value="{{ settings.autheliaLogoutUrl or '' }}" placeholder="https://auth.example.com/logout">
+        </label>
+        <button type="submit">Save Settings</button>
+      </form>
+    </div>
+    {% elif tab == 'users' %}
+    <div class="panel">
+      <h1>Users</h1>
+      <table>
+        <thead><tr><th>Username</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.created.strftime('%d.%m.%Y %H:%M') if user.created else '' }}</td>
+            <td>
+              <form action="/admin_panel/users/{{ user.id }}/password" method="POST" class="inline-form">
+                <input type="password" name="password" placeholder="New password" required minlength="6" style="display:inline-block;width:160px;">
+                <button type="submit">Set Password</button>
+              </form>
+              <form action="/admin_panel/users/{{ user.id }}/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete user {{ user.username }}?');">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>Add New User</h2>
+      <form action="/admin_panel/users/add" method="POST">
+        <label>Username
+          <input type="text" name="username" required>
+        </label>
+        <label>Password
+          <input type="password" name="password" required minlength="6">
+        </label>
+        <button type="submit">Add User</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

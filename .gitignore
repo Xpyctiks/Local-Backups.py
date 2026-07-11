@@ -2,5 +2,14 @@
 *.conf
 *.log
 *.json
+*.db
 */
 !/functions
+!/db
+!/pages
+!/templates
+!/static
+!/static/css
+!/static/js
+Log/
+log/

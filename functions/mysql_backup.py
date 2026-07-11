@@ -1,4 +1,5 @@
 import logging
+import shlex
 import subprocess
 from functions.send_to_telegram import send_to_telegram
 from functions.func import part_of_day
@@ -32,7 +33,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
   #check first of all for the personal defined parameters Socket and Port
   #if set both at the same time:
   if portIn and socketIn:
-    additional = f"-S{socketIn}"
+    additional = shlex.quote(f"-S{socketIn}")
     text = f"\tBoth personal Socket and Port are defined. Taking Socket as high priority."
     print(text)
     logging.info(text)
@@ -45,34 +46,38 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       logging.info(text)
       send_to_telegram(text)
     elif variables.BCKP_DEF_DB_SOCKET and not variables.BCKP_DEF_DB_PORT:
-      additional = f"-S{variables.BCKP_DEF_DB_SOCKET}"
+      additional = shlex.quote(f"-S{variables.BCKP_DEF_DB_SOCKET}")
       text2 += f"Using default SOCKET with DB {nameIn} backup "
       print(text2)
       logging.info(text2)
     elif not variables.BCKP_DEF_DB_SOCKET and variables.BCKP_DEF_DB_PORT:
-      additional = f"-h{mysqlHost} -P{variables.BCKP_DEF_DB_PORT}"
+      additional = f"{shlex.quote(f'-h{mysqlHost}')} {shlex.quote(f'-P{variables.BCKP_DEF_DB_PORT}')}"
       text2 += f"Using default PORT with DB {nameIn} backup "
       print(text2)
       logging.info(text2)
   #if set any of two personal values
   elif portIn and not socketIn:
-    additional = f"-h{mysqlHost} -P{portIn}"
+    additional = f"{shlex.quote(f'-h{mysqlHost}')} {shlex.quote(f'-P{portIn}')}"
     text2 += f"Using personal PORT value with DB {nameIn} backup "
     print(text2)
     logging.info(text2)
   elif not portIn and socketIn:
-    additional = f"-S{socketIn}"
+    additional = shlex.quote(f"-S{socketIn}")
     text2 += f"Using personal SOCKET value with DB {nameIn} backup "
     print(text2)
     logging.info(text2)
+  mysqlUserArg = shlex.quote(f"-u{mysqlUser}")
+  mysqlPassArg = shlex.quote(f"-p{mysqlPass}")
   #now check if ALL selected
   if dbIn == "ALL":
+    outFile = shlex.quote(f"{tofolderIn}/All-databases-morning.sql.gz")
     if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
-      cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases-morning.sql.gz"
+      outFile = shlex.quote(f"{tofolderIn}/All-databases-morning.sql.gz")
     elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
-      cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases-evening.sql.gz"
+      outFile = shlex.quote(f"{tofolderIn}/All-databases-evening.sql.gz")
     else:
-      cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick --all-databases | gzip > {tofolderIn}/All-databases.sql.gz"
+      outFile = shlex.quote(f"{tofolderIn}/All-databases.sql.gz")
+    cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick --all-databases | gzip > {outFile}"
     result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
     if result.returncode != 0:
       text = f"\tSome error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr.strip()}"
@@ -84,7 +89,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     logging.info(text)
   #now check if FETCH selected
   elif dbIn == "FETCH":
-    cmd = f'mysql -u{mysqlUser} -p{mysqlPass} {additional} -e "SHOW DATABASES;"'
+    cmd = f'mysql {mysqlUserArg} {mysqlPassArg} {additional} -e "SHOW DATABASES;"'
     result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
     databases = result.stdout.strip().split("\n")[1:]
     if len(databases) == 0:
@@ -100,12 +105,14 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       databases = [db for db in databases if db not in exclude_dbs]
       for db in databases:
         print(f"Creating dump for {db}...")
+        dbArg = shlex.quote(db)
         if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
-          cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-morning.sql.gz"
+          outFile = shlex.quote(f"{tofolderIn}/{db}-morning.sql.gz")
         elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
-          cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}-evening.sql.gz"
+          outFile = shlex.quote(f"{tofolderIn}/{db}-evening.sql.gz")
         else:
-          cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {db} | gzip > {tofolderIn}/{db}.sql.gz"
+          outFile = shlex.quote(f"{tofolderIn}/{db}.sql.gz")
+        cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick {dbArg} | gzip > {outFile}"
         result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         if result.returncode != 0:
           text = f"Some error while dumping Daily FETCH DB backup of {db}. Error: {result.stderr.strip()}"
@@ -115,15 +122,16 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
           continue
   #if individual database selected
   else:
+    dbArg = shlex.quote(dbIn)
     if (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "morning"):
       backup_file = tofolderIn+"/"+nameIn+"-morning.sql.gz"
-      cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
+      cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick {dbArg} | gzip > {shlex.quote(backup_file)}"
     elif (typeIn in ["Daily-Local", "Daily-Other"] and part_of_day() == "evening"):
       backup_file = tofolderIn+"/"+nameIn+"-evening.sql.gz"
-      cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
+      cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick {dbArg} | gzip > {shlex.quote(backup_file)}"
     else:
       backup_file = tofolderIn+"/"+nameIn+".sql.gz"
-      cmd = f"mysqldump -u{mysqlUser} -p{mysqlPass} {additional} --single-transaction --quick {dbIn} | gzip > {backup_file}"
+      cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick {dbArg} | gzip > {shlex.quote(backup_file)}"
     result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
     if result.returncode != 0:
       text = f"Some error while dumping Weekly DB backup of {nameIn}. Error: {result.stderr.strip()}"
