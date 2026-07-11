@@ -13,3 +13,5 @@
 !/static/js
 Log/
 log/
+gunicorn_config.py
+*.service
