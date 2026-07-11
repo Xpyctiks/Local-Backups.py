@@ -1,5 +1,6 @@
 from datetime import timedelta
 import logging
+from functions.send_to_telegram import send_to_telegram
 from flask import render_template, request, redirect, session, flash
 from flask_login import login_user, current_user
 from db.database import User
@@ -18,8 +19,10 @@ def do_login():
   password = request.form.get("password") or ""
   user = User.query.filter_by(username=username).first()
   if not user or not user.check_password(password):
-    flash("Invalid username or password.", "alert alert-danger")
-    return redirect("/login/")
+    logging.error(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Login: Wrong password \"{password}\" for user \"{username}\", IP:{request.remote_addr}, Real-IP:{request.headers.get('X-Real-IP', '-.-.-.-')}")
+    send_to_telegram(f"Login error! Wrong password for user \"{username}\", IP:{request.remote_addr}, Real-IP:{request.headers.get('X-Real-IP', '-.-.-.-')}","🚷Local-Backups-web:",)
+    flash('Невірний юзер або пароль!', 'alert alert-danger')
+    return redirect("/login/",302)
   session.clear()
   session.permanent = True
   login_user(user, remember=True, duration=timedelta(hours=8))
