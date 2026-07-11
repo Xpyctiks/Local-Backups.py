@@ -36,6 +36,7 @@ def generate_default_config(app: Flask) -> bool:
   fresh = not os.path.exists(variables.DB_FILE)
   if fresh:
     os.makedirs(variables.CONFIG_DIR, mode=0o770, exist_ok=True)
+    logging.info(f"No DB file exists. Creating the new one!")
   with app.app_context():
     db.create_all()
     if fresh:
@@ -46,6 +47,9 @@ def generate_default_config(app: Flask) -> bool:
         _seed_defaults()
       _seed_admin_user()
       db.session.commit()
+      logging.info(f"Migration from old JSON to the DB done!")
+    else:
+      logging.info(f"Kickstart: DB already exsits! using it.")
   return fresh
 
 def _seed_defaults() -> None:
@@ -147,6 +151,7 @@ def _seed_admin_user() -> None:
 def load_config(app: Flask) -> None:
   #Loads Settings + BackupJob rows from the database into functions.variables globals, and refreshes app.config.
   with app.app_context():
+    logging.info(f"Kickstart: loading configuration from the existing DB...")
     db.create_all()
     settings = db.session.get(Settings, 1)
     if settings is None:
@@ -184,6 +189,7 @@ def load_config(app: Flask) -> None:
     variables.HOSTNAME = os.uname().nodename
     app.config["SECRET_KEY"] = settings.sessionKey
     app.config["AUTHELIA_LOGOUT_URL"] = settings.autheliaLogoutUrl or ""
+    logging.info(f"Kickstart: loading configuration done!")
 
 def _job_to_dict(job: BackupJob) -> dict:
   d = {"Name": job.name}
