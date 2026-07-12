@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Panel - Local-Backups</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" sizes="48x48">
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
 </head>
 <body>
   {% include "_nav.html" %}
@@ -50,10 +54,10 @@
         <label>Default DB Password
           <input type="password" name="defaultDbPass" value="{{ settings.defaultDbPass or '' }}">
         </label>
-        <label>OS User (used for chown of backup files)
+        <label>OS User (used for chown of backup files) - Name or ID
           <input type="text" name="osUser" value="{{ settings.osUser or '' }}">
         </label>
-        <label>OS Group (used for chown of backup files)
+        <label>OS Group (used for chown of backup files) - Name or ID
           <input type="text" name="osGroup" value="{{ settings.osGroup or '' }}">
         </label>
         <label>Authelia Logout URL (optional)

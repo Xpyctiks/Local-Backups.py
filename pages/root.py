@@ -1,5 +1,6 @@
+import logging
 from flask import render_template, request, redirect, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from db.db import db
 from db.database import BackupJob, BACKUP_NAME_PATTERN
 from pages import pages_bp
@@ -50,6 +51,7 @@ def backups_add():
   db.session.add(job)
   db.session.commit()
   flash(f"Backup job '{name}' added.", "alert alert-success")
+  logging.info(f"New job added {job.name} by {current_user.username}")
   return redirect("/")
 
 @pages_bp.route("/backups/<int:job_id>/delete", methods=["POST"])
@@ -60,6 +62,7 @@ def backups_delete(job_id):
     db.session.delete(job)
     db.session.commit()
     flash(f"Backup job '{job.name}' deleted.", "alert alert-success")
+    logging.info(f"Job {job.name} deleted by {current_user.username}")
   return redirect("/")
 
 @pages_bp.route("/backups/<int:job_id>/toggle", methods=["POST"])
@@ -70,4 +73,5 @@ def backups_toggle(job_id):
     job.enabled = not job.enabled
     db.session.commit()
     flash(f"Backup job '{job.name}' {'enabled' if job.enabled else 'disabled'}.", "alert alert-success")
+    logging.info(f"Job {job.name} {'enabled' if job.enabled else 'disabled'} by {current_user.username}")
   return redirect("/")

@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Backups - Local-Backups</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" sizes="48x48">
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
 </head>
 <body>
   {% include "_nav.html" %}
@@ -75,8 +79,8 @@
         </label>
         <fieldset>
           <legend>Type</legend>
-          <label><input type="radio" name="job_type" value="folder" checked onchange="toggleJobType()"> Folder</label>
-          <label><input type="radio" name="job_type" value="db" onchange="toggleJobType()"> Database</label>
+          <label><input type="radio" name="job_type" value="folder" checked onchange="toggleJobType()"> Folder (used in Weekly backups)</label>
+          <label><input type="radio" name="job_type" value="db" onchange="toggleJobType()"> Database (used in Daily backups)</label>
         </fieldset>
         <div id="folder-fields">
           <label>Folder path

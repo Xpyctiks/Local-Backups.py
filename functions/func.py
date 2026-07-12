@@ -2,9 +2,17 @@ import os
 import logging
 import sys
 import hashlib
+import pwd
+import grp
 from datetime import datetime
 from functions.send_to_telegram import send_to_telegram
 from functions import variables
+
+def configure_job_logging() -> None:
+  """Called at the start of every daily/weekly job function (daily.py/weekly.py)"""
+  log_file = os.path.join(variables.LOG_FOLDER, datetime.now().strftime('%d-%m-%Y')+'.log')
+  logging.basicConfig(filename=log_file,level=logging.INFO,format='%(asctime)s - Local-Backups - %(levelname)s - %(message)s',datefmt='%d-%m-%Y %H:%M:%S',force=True)
+  logging.getLogger("httpx").setLevel(logging.WARNING)
 
 def check_pid(jobtype: str):
   if os.path.exists(variables.PID_FILE):
@@ -82,6 +90,10 @@ def chown(path: str) -> bool:
   try:
     uid = variables.USER
     gid = variables.GROUP
+    if not isinstance(uid, int):
+      uid = pwd.getpwnam(uid).pw_uid
+    if not isinstance(gid, int):
+      gid = grp.getgrnam(gid).gr_gid
     os.chown(path, uid, gid)
     for dirpath, dirnames, filenames in os.walk(path):
       for d in dirnames:

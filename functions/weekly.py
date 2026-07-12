@@ -2,13 +2,15 @@ import os
 import logging
 import tarfile
 from functions.send_to_telegram import send_to_telegram
-from functions.func import create_sha256,finish_job
+from functions.func import create_sha256,finish_job,configure_job_logging
 from functions.mysql_backup import mysql_backup
 from functions import variables
 
 def weekly_local():
+  configure_job_logging()
   try:
-    if len(variables.LOCAL_BCKP_LIST) < 2:
+    print(variables.LOCAL_BCKP_LIST)
+    if len(variables.LOCAL_BCKP_LIST) == 0:
       text = "Weekly-Local: empty config for this type of job"
       logging.info(text)
       print(text)
@@ -62,8 +64,9 @@ def weekly_local():
     send_to_telegram(f"🚨Weekly-Local: Global error {msg}")
 
 def weekly_other():
+  configure_job_logging()
   try:
-    if len(variables.OTHER_BCKP_LIST) < 2:
+    if len(variables.OTHER_BCKP_LIST) == 0:
       text = "Weekly-Other: empty config for this type of job"
       logging.info(text)
       print(text)
