@@ -16,6 +16,7 @@
     <div class="tabs">
       <a href="/admin_panel/settings/" class="{{ 'active' if tab == 'settings' else '' }}">Settings</a>
       <a href="/admin_panel/users/" class="{{ 'active' if tab == 'users' else '' }}">Users</a>
+      <a href="/admin_panel/remotes/" class="{{ 'active' if tab == 'remotes' else '' }}">Remote Servers</a>
     </div>
     {% if tab == 'settings' %}
     <div class="panel">
@@ -63,6 +64,9 @@
         <label>Authelia Logout URL (optional)
           <input type="text" name="autheliaLogoutUrl" value="{{ settings.autheliaLogoutUrl or '' }}" placeholder="https://auth.example.com/logout">
         </label>
+        <label>Remote Reports Key (optional, personal key of this server for make reports of all jobs done to remote servers)
+          <input type="text" name="remoteReportsKey" value="{{ settings.remoteReportsKey or '' }}">
+        </label>
         <button type="submit">Save Settings</button>
       </form>
     </div>
@@ -102,7 +106,49 @@
         <button type="submit">Add User</button>
       </form>
     </div>
+    {% elif tab == 'remotes' %}
+    <div class="panel">
+      <h1>Remote Servers</h1>
+      <table>
+        <thead><tr><th>Name</th><th>Address</th><th>Port</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for server in remotes %}
+          <tr>
+            <td>{{ server.name }}</td>
+            <td>{{ server.address }}</td>
+            <td>{{ server.port }}</td>
+            <td>{{ server.created.strftime('%d.%m.%Y %H:%M') if server.created else '' }}</td>
+            <td>
+              <button type="button" class="inline-form" data-id="{{ server.id }}" data-name="{{ server.name }}" data-address="{{ server.address }}" data-port="{{ server.port }}" onclick="editRemoteServer(this)">Edit</button>
+              <form action="/admin_panel/remotes/{{ server.id }}/delete" method="POST" class="inline-form delete-remote-form" data-name="{{ server.name }}">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">No remote servers configured yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2 id="remote-form-title">Add New Remote Server</h2>
+      <form action="/admin_panel/remotes/add" method="POST" id="remote-form">
+        <label>Name
+          <input type="text" name="name" id="remote-name" required>
+        </label>
+        <label>Address
+          <input type="text" name="address" id="remote-address" required placeholder="10.0.0.5 or backup2.example.com">
+        </label>
+        <label>Port
+          <input type="number" name="port" id="remote-port" required min="1" max="65535" placeholder="22">
+        </label>
+        <button type="submit" id="remote-form-submit">Add Remote Server</button>
+        <button type="button" id="remote-form-cancel" onclick="resetRemoteServerForm()" style="display:none;">Cancel</button>
+      </form>
+    </div>
     {% endif %}
   </div>
+  <script src="{{ url_for('static', filename='js/admin_panel.js') }}"></script>
 </body>
 </html>

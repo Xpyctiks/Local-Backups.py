@@ -66,6 +66,7 @@ def _seed_defaults() -> None:
     osGroup="root",
     sessionKey=secrets.token_hex(32),
     autheliaLogoutUrl="",
+    remoteReportsKey="",
   )
   db.session.add(settings)
   text = f"First launch. Database initialized with default settings at {variables.DB_FILE}. Configure it via the web admin panel, then add backup jobs on the main page."
@@ -117,6 +118,7 @@ def load_config(app: Flask) -> None:
     variables.BCKP_DEF_DB_SOCKET = settings.defaultDbSocket or ""
     variables.BCKP_DEF_DB_USER = settings.defaultDbUser or ""
     variables.BCKP_DEF_DB_PASS = settings.defaultDbPass or ""
+    variables.REMOTE_REPORTS_KEY = settings.remoteReportsKey or ""
     variables.USER = settings.osUser
     variables.GROUP = settings.osGroup
     variables.LOCAL_BCKP_LIST = [_job_to_dict(j) for j in BackupJob.query.filter_by(scope="Local", enabled=True).all()]

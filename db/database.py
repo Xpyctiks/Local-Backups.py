@@ -24,6 +24,7 @@ class Settings(db.Model):
   osGroup = db.Column(db.String(64), nullable=False, default="root")
   sessionKey = db.Column(db.String(128), nullable=False)
   autheliaLogoutUrl = db.Column(db.String(255), nullable=True, default="")
+  remoteReportsKey = db.Column(db.String(255), nullable=True, default="")
 
 class BackupJob(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -62,3 +63,10 @@ class User(UserMixin, db.Model):
 
   def check_password(self, raw_password: str) -> bool:
     return check_password_hash(self.password_hash, raw_password)
+
+class RemoteReports(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(80), nullable=False)
+  address = db.Column(db.String(255), unique=True, nullable=False)
+  port = db.Column(db.Integer, nullable=False)
+  created = db.Column(db.DateTime, default=datetime.now)

@@ -2,19 +2,21 @@ import os
 import logging
 import tarfile
 from functions.send_to_telegram import send_to_telegram
-from functions.func import create_sha256,finish_job,configure_job_logging
+from functions.func import create_sha256,finish_job,configure_job_logging,send_remote_reports
 from functions.mysql_backup import mysql_backup
 from functions import variables
 
 def weekly_local():
   configure_job_logging()
   try:
+    error_level = 0
     print(variables.LOCAL_BCKP_LIST)
     if len(variables.LOCAL_BCKP_LIST) == 0:
       text = "Weekly-Local: empty config for this type of job"
       logging.info(text)
       print(text)
       send_to_telegram("⚠"+text)
+      send_remote_reports("Weekly-Local","⚠no jobs configured")
       finish_job("Weekly-Local")
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME)):
@@ -32,6 +34,7 @@ def weekly_local():
         if not os.path.exists(item.get('Folder')):
           text = f"Weekly-Local: The directory {item.get('Folder')} doesn't exists! Skipping..."
           print(text)
+          error_level = 1
           logging.error(text)
           send_to_telegram(text)
           continue
@@ -49,28 +52,40 @@ def weekly_local():
           text = f"🚨Some error while packing folder {item.get('Folder')}. Error: {msg}"
           logging.error(text)
           print(text)
+          error_level = 1
           send_to_telegram(text)
           continue
       #If there is DB variable - doing backup of DB
       elif item.get('DB'):
         mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Local")
-    create_sha256(TO_FOLDER)
+    if not create_sha256(TO_FOLDER):
+      text = f"Errors during creating SHA265 hash inside {TO_FOLDER}"
+      logging.error(text)
+      send_to_telegram(text)
+      error_level = 1
     text = f"\tWeekly-Local Files and DB backups done successfully!"
     print(text)
     logging.info(text)
+    if error_level == 0:
+      send_remote_reports("Weekly-Local","❇ok")
+    elif error_level == 1:
+      send_remote_reports("Weekly-Local","⚠some errors found")
     finish_job("Weekly-Local")
   except Exception as msg:
     logging.error(f"Weekly-Local: Global error {msg}")
     send_to_telegram(f"🚨Weekly-Local: Global error {msg}")
+    send_remote_reports("Weekly-Local","🚨global error")
 
 def weekly_other():
   configure_job_logging()
   try:
+    error_level = 0
     if len(variables.OTHER_BCKP_LIST) == 0:
       text = "Weekly-Other: empty config for this type of job"
       logging.info(text)
       print(text)
       send_to_telegram("⚠"+text)
+      send_remote_reports("Weekly-Other","⚠no jobs configured")
       finish_job("Weekly-Other")
     #listing items, dividing them to Folder and DB versions
     for item in variables.OTHER_BCKP_LIST:
@@ -81,6 +96,7 @@ def weekly_other():
           text = f"Weekly-Other: The directory {item.get('Folder')} doesn't exists! Skipping..."
           print(text)
           logging.error(text)
+          error_level = 1
           send_to_telegram(text)
           continue
         #Making full path to the destination folder
@@ -101,11 +117,16 @@ def weekly_other():
           text = f"Archive {os.path.join(TO_FOLDER,item.get('Name')+'.tar.gz')} created sucessfully!"
           logging.info(text)
           print(text)
-          create_sha256(TO_FOLDER)
+          if not create_sha256(TO_FOLDER):
+            text = f"Errors during creating SHA265 hash inside {TO_FOLDER}"
+            logging.error(text)
+            send_to_telegram(text)
+            error_level = 1
         except Exception as msg:
           text = f"🚨Some error while packing folder {item.get('Folder')}. Error: {msg}"
           logging.error(text)
           print(text)
+          error_level = 1
           send_to_telegram(text)
           continue
         #If there is DB variable - doing backup of DB
@@ -119,11 +140,20 @@ def weekly_other():
           print(text)
           logging.info(text)
         mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Other")
-        create_sha256(TO_FOLDER)
+        if not create_sha256(TO_FOLDER):
+          text = f"Errors during creating SHA265 hash inside {TO_FOLDER}"
+          logging.error(text)
+          send_to_telegram(text)
+          error_level = 1
     text = f"\tWeekly-Other Files and DB backups done successfully!"
     print(text)
     logging.info(text)
+    if error_level == 0:
+      send_remote_reports("Weekly-Other","❇ok")
+    elif error_level == 1:
+      send_remote_reports("Weekly-Other","⚠some errors found")
     finish_job("Weekly-Other")
   except Exception as msg:
     logging.error(f"Weekly-Local: Global error {msg}")
     send_to_telegram(f"🚨Weekly-Local: Global error {msg}")
+    send_remote_reports("Weekly-Other","🚨global error")

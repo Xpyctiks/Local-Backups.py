@@ -1,18 +1,49 @@
 import os
 import logging
 import sys
+import socket
+import threading
 import hashlib
 import pwd
 import grp
 from datetime import datetime
 from functions.send_to_telegram import send_to_telegram
 from functions import variables
+from db.db import db
+from db.database import Settings, RemoteReports
 
 def configure_job_logging() -> None:
   """Called at the start of every daily/weekly job function (daily.py/weekly.py)"""
   log_file = os.path.join(variables.LOG_FOLDER, datetime.now().strftime('%d-%m-%Y')+'.log')
   logging.basicConfig(filename=log_file,level=logging.INFO,format='%(asctime)s - Local-Backups - %(levelname)s - %(message)s',datefmt='%d-%m-%Y %H:%M:%S',force=True)
   logging.getLogger("httpx").setLevel(logging.WARNING)
+
+def _send_remote_report_tcp(address: str, port: int, message: str) -> None:
+  try:
+    with socket.create_connection((address, port), timeout=5) as sock:
+      sock.sendall(message.encode("utf-8"))
+    logging.info(f"send_remote_reports(): notified {address}:{port} - {message}")
+  except Exception as msg:
+    logging.error(f"send_remote_reports(): failed to notify {address}:{port} - {msg}")
+
+def send_remote_reports(jobtype: str,error: str) -> None:
+  try:
+    settings = db.session.get(Settings, 1)
+    if not settings or not settings.remoteReportsKey:
+      return
+    servers = RemoteReports.query.all()
+    if not servers:
+      return
+    message = f"{settings.remoteReportsKey},{jobtype},{error}"
+    threads = []
+    for server in servers:
+      t = threading.Thread(target=_send_remote_report_tcp, args=(server.address, server.port, message), daemon=True)
+      t.start()
+      threads.append(t)
+    for t in threads:
+      t.join(timeout=5)
+  except Exception as msg:
+    logging.error(f"send_remote_reports(): global error: {msg}")
 
 def check_pid(jobtype: str):
   if os.path.exists(variables.PID_FILE):
