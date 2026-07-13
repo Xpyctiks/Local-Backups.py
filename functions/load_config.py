@@ -45,8 +45,36 @@ def generate_default_config(app: Flask) -> bool:
       db.session.commit()
       logging.info(f"Kickstart: No DB already exsits! Creating the new one...")
     else:
+      _migrate_backupjob_name_unique()
       logging.info(f"Kickstart: DB already exsits! Using it...")
   return fresh
+
+def _migrate_backupjob_name_unique() -> None:
+  #Pre-existing installs had a table-wide UNIQUE constraint on BackupJob.name, which blocked
+  #adding a Folder job and a DB job with the same name. Detect the old constraint (a unique
+  #index covering only the "name" column) and rebuild the table without it, keeping all rows.
+  indexes = db.session.execute(db.text("PRAGMA index_list('backup_job')")).fetchall()
+  needs_migration = False
+  for idx in indexes:
+    idx_name, is_unique = idx[1], idx[2]
+    if not is_unique:
+      continue
+    cols = [c[2] for c in db.session.execute(db.text(f"PRAGMA index_info('{idx_name}')")).fetchall()]
+    if cols == ["name"]:
+      needs_migration = True
+      break
+  if not needs_migration:
+    return
+  logging.info("Migrating backup_job table: dropping legacy UNIQUE(name) constraint so a Folder and a DB job can share a name...")
+  db.session.execute(db.text("ALTER TABLE backup_job RENAME TO backup_job_old"))
+  db.create_all()
+  db.session.execute(db.text(
+    "INSERT INTO backup_job (id,name,scope,folder,db,dbHost,dbUser,dbPassword,dbSocket,dbPort,enabled,created,updated) "
+    "SELECT id,name,scope,folder,db,dbHost,dbUser,dbPassword,dbSocket,dbPort,enabled,created,updated FROM backup_job_old"
+  ))
+  db.session.execute(db.text("DROP TABLE backup_job_old"))
+  db.session.commit()
+  logging.info("Migration of backup_job table completed.")
 
 def _seed_defaults() -> None:
   settings = Settings(

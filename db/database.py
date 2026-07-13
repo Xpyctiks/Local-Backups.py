@@ -30,7 +30,7 @@ class Settings(db.Model):
 
 class BackupJob(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String(128), unique=True, nullable=False)
+  name = db.Column(db.String(128), nullable=False)
   scope = db.Column(db.String(16), nullable=False)
   folder = db.Column(db.String(255), nullable=True)
   db_name = db.Column("db", db.String(128), nullable=True)

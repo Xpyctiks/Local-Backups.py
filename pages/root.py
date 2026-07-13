@@ -26,8 +26,16 @@ def backups_add():
   if not name or not BACKUP_NAME_PATTERN.match(name):
     flash("Name is required and may only contain letters, numbers, spaces, dots, underscores and hyphens.", "alert alert-danger")
     return redirect("/")
-  if BackupJob.query.filter_by(name=name).first():
-    flash(f"A backup job named '{name}' already exists.", "alert alert-danger")
+  if job_type not in ("folder", "db"):
+    flash("Invalid backup type.", "alert alert-danger")
+    return redirect("/")
+  #Name is only required to be unique per job type - a Folder job and a DB job may share a name.
+  same_type_exists = any(
+    (existing.folder is not None) == (job_type == "folder")
+    for existing in BackupJob.query.filter_by(name=name).all()
+  )
+  if same_type_exists:
+    flash(f"A {'Folder' if job_type == 'folder' else 'Database'} backup job named '{name}' already exists.", "alert alert-danger")
     return redirect("/")
   job = BackupJob(name=name, scope=scope)
   if job_type == "folder":
@@ -39,7 +47,7 @@ def backups_add():
       flash(f"Folder '{folder}' does not exist.", "alert alert-danger")
       return redirect("/")
     job.folder = folder
-  elif job_type == "db":
+  else:
     db_name = (request.form.get("db") or "").strip()
     if not db_name:
       flash("Database name (or ALL / FETCH) is required.", "alert alert-danger")
@@ -50,9 +58,6 @@ def backups_add():
     job.dbPassword = (request.form.get("dbPassword") or "").strip() or None
     job.dbSocket = (request.form.get("dbSocket") or "").strip() or None
     job.dbPort = (request.form.get("dbPort") or "").strip() or None
-  else:
-    flash("Invalid backup type.", "alert alert-danger")
-    return redirect("/")
   db.session.add(job)
   db.session.commit()
   flash(f"Backup job '{name}' added.", "alert alert-success")
