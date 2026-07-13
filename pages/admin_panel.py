@@ -3,6 +3,7 @@ from flask_login import login_required
 from db.db import db
 from db.database import Settings, User, RemoteReports, RemoteServers
 from pages import pages_bp
+import socket
 
 SETTINGS_FIELDS = [
   "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder",
@@ -14,7 +15,7 @@ SETTINGS_FIELDS = [
 @login_required
 def admin_panel_settings():
   settings = db.session.get(Settings, 1)
-  return render_template("template-admin_panel.html", tab="settings", settings=settings, users=None)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="settings", settings=settings, users=None)
 
 @pages_bp.route("/admin_panel/settings/", methods=["POST"])
 @login_required
@@ -31,7 +32,7 @@ def admin_panel_settings_save():
 @login_required
 def remote_servers_settings():
   servers = RemoteReports.query.order_by(RemoteReports.name).all()
-  return render_template("template-admin_panel.html", tab="remotes", settings=None, users=None, remotes=servers)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="remotes", settings=None, users=None, remotes=servers)
 
 def _parse_remote_server_form(request):
   #Returns (name, address, port, error_message). error_message is None if the input is valid.
@@ -100,7 +101,7 @@ def remote_servers_delete(server_id):
 @login_required
 def trusted_senders_settings():
   senders = RemoteServers.query.order_by(RemoteServers.name).all()
-  return render_template("template-admin_panel.html", tab="senders", settings=None, users=None, senders=senders)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="senders", settings=None, users=None, senders=senders)
 
 def _parse_trusted_sender_form(request):
   #Returns (name, personalkey, address, error_message). error_message is None if the input is valid.
@@ -163,7 +164,7 @@ def trusted_senders_delete(sender_id):
 @login_required
 def admin_panel_users():
   users = User.query.order_by(User.username).all()
-  return render_template("template-admin_panel.html", tab="users", settings=None, users=users)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="users", settings=None, users=users)
 
 @pages_bp.route("/admin_panel/users/add", methods=["POST"])
 @login_required

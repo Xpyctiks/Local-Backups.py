@@ -5,6 +5,7 @@
     <a href="/logs/">☯Logs</a>
     <a href="/admin_panel/settings/">☮Admin Panel</a>
   </div>
+  {% if hostname %}<div class="nav-hostname">{{ hostname }}</div>{% endif %}
   <form action="/logout/" method="POST" class="nav-logout">
     <button type="submit">Logout</button>
   </form>

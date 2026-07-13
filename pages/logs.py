@@ -1,5 +1,6 @@
 import os
 import re
+import socket
 from datetime import datetime
 from flask import render_template, request, jsonify
 from flask_login import login_required
@@ -16,7 +17,7 @@ ALLOWED_LOG_NAME = re.compile(r'^(\d{2}-\d{2}-\d{4}\.log|000-general\.log)$')
 @pages_bp.route("/logs/", methods=["GET"])
 @login_required
 def logs_page():
-  return render_template("template-logs.html")
+  return render_template("template-logs.html", hostname=socket.gethostname())
 
 @pages_bp.route("/logs/api/dates/", methods=["GET"])
 @login_required
