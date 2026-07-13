@@ -1,4 +1,5 @@
 import logging
+import os
 import socket
 from flask import render_template, request, redirect, flash
 from flask_login import login_required, current_user
@@ -33,6 +34,9 @@ def backups_add():
     folder = (request.form.get("folder") or "").strip()
     if not folder:
       flash("Folder path is required.", "alert alert-danger")
+      return redirect("/")
+    if not os.path.isdir(folder):
+      flash(f"Folder '{folder}' does not exist.", "alert alert-danger")
       return redirect("/")
     job.folder = folder
   elif job_type == "db":
