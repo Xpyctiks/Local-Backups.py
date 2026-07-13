@@ -17,6 +17,7 @@
       <a href="/admin_panel/settings/" class="{{ 'active' if tab == 'settings' else '' }}">Settings</a>
       <a href="/admin_panel/users/" class="{{ 'active' if tab == 'users' else '' }}">Users</a>
       <a href="/admin_panel/remotes/" class="{{ 'active' if tab == 'remotes' else '' }}">Remote Servers</a>
+      <a href="/admin_panel/senders/" class="{{ 'active' if tab == 'senders' else '' }}">Trusted Senders</a>
     </div>
     {% if tab == 'settings' %}
     <div class="panel">
@@ -66,6 +67,12 @@
         </label>
         <label>Remote Reports Key (optional, personal key of this server for make reports of all jobs done to remote servers)
           <input type="text" name="remoteReportsKey" value="{{ settings.remoteReportsKey or '' }}">
+        </label>
+        <label>Reports Listener Bind address
+          <input type="text" name="reportsListenerBindAddr" value="{{ settings.reportsListenerBindAddr or '' }}">
+        </label>
+        <label>Reports Listener Bind port
+          <input type="text" name="reportsListenerBindPort" value="{{ settings.reportsListenerBindPort or '' }}">
         </label>
         <button type="submit">Save Settings</button>
       </form>
@@ -145,6 +152,48 @@
         </label>
         <button type="submit" id="remote-form-submit">Add Remote Server</button>
         <button type="button" id="remote-form-cancel" onclick="resetRemoteServerForm()" style="display:none;">Cancel</button>
+      </form>
+    </div>
+    {% elif tab == 'senders' %}
+    <div class="panel">
+      <h1>Trusted Senders</h1>
+      <p>Servers allowed to submit job reports to this server's report listener (<code>rem_reports_listener.py</code>). An incoming report is accepted only if its source IP matches a row's Address <em>and</em> the key in the message matches that row's Personal Key.</p>
+      <table>
+        <thead><tr><th>Name</th><th>Personal Key</th><th>Address</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for sender in senders %}
+          <tr>
+            <td>{{ sender.name }}</td>
+            <td>{{ sender.personalkey }}</td>
+            <td>{{ sender.address }}</td>
+            <td>{{ sender.created.strftime('%d.%m.%Y %H:%M') if sender.created else '' }}</td>
+            <td>
+              <button type="button" class="inline-form" data-id="{{ sender.id }}" data-name="{{ sender.name }}" data-personalkey="{{ sender.personalkey }}" data-address="{{ sender.address }}" onclick="editTrustedSender(this)">Edit</button>
+              <form action="/admin_panel/senders/{{ sender.id }}/delete" method="POST" class="inline-form delete-sender-form" data-name="{{ sender.name }}">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">No trusted senders configured yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2 id="sender-form-title">Add New Trusted Sender</h2>
+      <form action="/admin_panel/senders/add" method="POST" id="sender-form">
+        <label>Name
+          <input type="text" name="name" id="sender-name" required>
+        </label>
+        <label>Personal Key (must match the remoteReportsKey the sending server uses)
+          <input type="text" name="personalkey" id="sender-personalkey" required>
+        </label>
+        <label>Address (source IP the reports will arrive from)
+          <input type="text" name="address" id="sender-address" required placeholder="10.0.0.5">
+        </label>
+        <button type="submit" id="sender-form-submit">Add Trusted Sender</button>
+        <button type="button" id="sender-form-cancel" onclick="resetTrustedSenderForm()" style="display:none;">Cancel</button>
       </form>
     </div>
     {% endif %}

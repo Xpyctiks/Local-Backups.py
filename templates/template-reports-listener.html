@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report Listener - Local-Backups</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-brand">Local-Backups - Report Listener</div>
+    <div class="nav-links">
+      {% if listener_running %}
+        <span style="color:#12793f;">&#9679; Listener daemon running</span>
+      {% else %}
+        <span style="color:#d92d20;">&#9679; Listener daemon not running</span>
+      {% endif %}
+    </div>
+    <form action="/logout/" method="POST" class="nav-logout">
+      <button type="submit">Logout</button>
+    </form>
+  </nav>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <div class="container">
+    <div class="panel">
+      <h1>Remote Job Reports</h1>
+      <form method="GET" action="/" class="logs-toolbar">
+        <label>Date
+          <select name="date" onchange="this.form.submit()">
+            {% for d in available_dates %}
+            <option value="{{ d }}" {{ 'selected' if d == selected_date else '' }}>{{ d }}{{ ' (today)' if d == today_str else '' }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </form>
+      <table>
+        <thead><tr><th>Time</th><th>Server</th><th>Job Type</th><th>Result</th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.date.strftime('%H:%M:%S') if row.date else '' }}</td>
+            <td>{{ row.name }}</td>
+            <td>{{ row.jobtype }}</td>
+            <td>{{ row.result }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4">No reports recorded for {{ selected_date }}.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

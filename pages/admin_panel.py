@@ -1,13 +1,13 @@
 from flask import render_template, request, redirect, flash
 from flask_login import login_required
 from db.db import db
-from db.database import Settings, User, RemoteReports
+from db.database import Settings, User, RemoteReports, RemoteServers
 from pages import pages_bp
 
 SETTINGS_FIELDS = [
   "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder",
   "defaultDbHost", "defaultDbPort", "defaultDbSocket", "defaultDbUser", "defaultDbPass",
-  "osUser", "osGroup", "autheliaLogoutUrl", "remoteReportsKey"
+  "osUser", "osGroup", "autheliaLogoutUrl", "remoteReportsKey", "reportsListenerBindAddr", "reportsListenerBindPort"
 ]
 
 @pages_bp.route("/admin_panel/settings/", methods=["GET"])
@@ -95,6 +95,69 @@ def remote_servers_delete(server_id):
     db.session.commit()
     flash(f"Remote server '{server.name}' deleted.", "alert alert-success")
   return redirect("/admin_panel/remotes/")
+
+@pages_bp.route("/admin_panel/senders/", methods=["GET"])
+@login_required
+def trusted_senders_settings():
+  senders = RemoteServers.query.order_by(RemoteServers.name).all()
+  return render_template("template-admin_panel.html", tab="senders", settings=None, users=None, senders=senders)
+
+def _parse_trusted_sender_form(request):
+  #Returns (name, personalkey, address, error_message). error_message is None if the input is valid.
+  name = (request.form.get("name") or "").strip()
+  personalkey = (request.form.get("personalkey") or "").strip()
+  address = (request.form.get("address") or "").strip()
+  if not name or not personalkey or not address:
+    return None, None, None, "Name, personal key and address are required."
+  return name, personalkey, address, None
+
+@pages_bp.route("/admin_panel/senders/add", methods=["POST"])
+@login_required
+def trusted_senders_add():
+  name, personalkey, address, error = _parse_trusted_sender_form(request)
+  if error:
+    flash(error, "alert alert-danger")
+    return redirect("/admin_panel/senders/")
+  if RemoteServers.query.filter_by(personalkey=personalkey).first():
+    flash("A trusted sender with this personal key already exists.", "alert alert-danger")
+    return redirect("/admin_panel/senders/")
+  sender = RemoteServers(name=name, personalkey=personalkey, address=address)
+  db.session.add(sender)
+  db.session.commit()
+  flash(f"Trusted sender '{name}' added.", "alert alert-success")
+  return redirect("/admin_panel/senders/")
+
+@pages_bp.route("/admin_panel/senders/<int:sender_id>/edit", methods=["POST"])
+@login_required
+def trusted_senders_edit(sender_id):
+  sender = db.session.get(RemoteServers, sender_id)
+  if not sender:
+    flash("Trusted sender not found.", "alert alert-danger")
+    return redirect("/admin_panel/senders/")
+  name, personalkey, address, error = _parse_trusted_sender_form(request)
+  if error:
+    flash(error, "alert alert-danger")
+    return redirect("/admin_panel/senders/")
+  duplicate = RemoteServers.query.filter(RemoteServers.personalkey == personalkey, RemoteServers.id != sender_id).first()
+  if duplicate:
+    flash("A trusted sender with this personal key already exists.", "alert alert-danger")
+    return redirect("/admin_panel/senders/")
+  sender.name = name
+  sender.personalkey = personalkey
+  sender.address = address
+  db.session.commit()
+  flash(f"Trusted sender '{name}' updated.", "alert alert-success")
+  return redirect("/admin_panel/senders/")
+
+@pages_bp.route("/admin_panel/senders/<int:sender_id>/delete", methods=["POST"])
+@login_required
+def trusted_senders_delete(sender_id):
+  sender = db.session.get(RemoteServers, sender_id)
+  if sender:
+    db.session.delete(sender)
+    db.session.commit()
+    flash(f"Trusted sender '{sender.name}' deleted.", "alert alert-success")
+  return redirect("/admin_panel/senders/")
 
 @pages_bp.route("/admin_panel/users/", methods=["GET"])
 @login_required

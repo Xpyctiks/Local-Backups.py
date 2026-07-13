@@ -29,3 +29,35 @@ document.querySelectorAll(".delete-remote-form").forEach((form) => {
     }
   });
 });
+
+function editTrustedSender(btn) {
+  const form = document.getElementById("sender-form");
+  if (!form) return;
+  const { id, name, personalkey, address } = btn.dataset;
+  form.action = `/admin_panel/senders/${id}/edit`;
+  document.getElementById("sender-name").value = name;
+  document.getElementById("sender-personalkey").value = personalkey;
+  document.getElementById("sender-address").value = address;
+  document.getElementById("sender-form-title").textContent = `Edit Trusted Sender: ${name}`;
+  document.getElementById("sender-form-submit").textContent = "Save Changes";
+  document.getElementById("sender-form-cancel").style.display = "";
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function resetTrustedSenderForm() {
+  const form = document.getElementById("sender-form");
+  if (!form) return;
+  form.action = "/admin_panel/senders/add";
+  form.reset();
+  document.getElementById("sender-form-title").textContent = "Add New Trusted Sender";
+  document.getElementById("sender-form-submit").textContent = "Add Trusted Sender";
+  document.getElementById("sender-form-cancel").style.display = "none";
+}
+
+document.querySelectorAll(".delete-sender-form").forEach((form) => {
+  form.addEventListener("submit", (e) => {
+    if (!confirm(`Delete trusted sender ${form.dataset.name}?`)) {
+      e.preventDefault();
+    }
+  });
+});

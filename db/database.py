@@ -25,6 +25,8 @@ class Settings(db.Model):
   sessionKey = db.Column(db.String(128), nullable=False)
   autheliaLogoutUrl = db.Column(db.String(255), nullable=True, default="")
   remoteReportsKey = db.Column(db.String(255), nullable=True, default="")
+  reportsListenerBindAddr = db.Column(db.String(255), nullable=True, default="127.0.0.1")
+  reportsListenerBindPort = db.Column(db.String(16), nullable=True, default="10555")
 
 class BackupJob(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -70,3 +72,18 @@ class RemoteReports(db.Model):
   address = db.Column(db.String(255), unique=True, nullable=False)
   port = db.Column(db.Integer, nullable=False)
   created = db.Column(db.DateTime, default=datetime.now)
+
+class RemoteServers(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(80), nullable=False)
+  personalkey = db.Column(db.String(255), unique=True, nullable=False)
+  address = db.Column(db.String(255), unique=False, nullable=False)
+  created = db.Column(db.DateTime, default=datetime.now)
+
+class RemoteServersStatistics(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  date = db.Column(db.DateTime, default=datetime.now)
+  name = db.Column(db.String(80), nullable=False)
+  jobtype = db.Column(db.String(80), nullable=False)
+  result = db.Column(db.String(255), unique=False, nullable=False)
+  

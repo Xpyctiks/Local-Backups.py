@@ -47,6 +47,85 @@ gunicorn -c gunicorn_config.py webapp:application
 - **`/login/authelia/`** - dedicated route to be protected by Nginx's Authelia `auth_request`; if Nginx has already set the trusted `Remote-User` header, the matching web user is logged in automatically (the user must already exist under `/admin_panel/users/` - Authelia does not auto-create accounts).
 - **`/logout/`** (POST only) - logs out locally and, if an Authelia logout URL is configured, redirects there too.
 
-## Upgrading from config.json
+## Example of gunicorn_config_listener.py
+```
+import sys
+import os
 
-If you're upgrading an installation that still has `/etc/local-backups.py/config.json`, just run any CLI job command as usual: on first run, the database doesn't exist yet, so the tool parses the existing `config.json`, creates a matching `Settings` row and one `BackupJob` row per configured item, and leaves `config.json` in place afterward (untouched, as a fallback). From then on, the database is the source of truth and `config.json` is ignored.
+#change to yours
+venv_path = "/usr/local/"
+sys.path.insert(0, os.path.join(venv_path, "lib/python3.11/site-packages"))
+#change to yours
+sys.path.insert(0, "/opt/Local-Backups.py")
+
+bind = "127.0.0.1:8001"
+workers = 2
+threads = 4
+worker_class = "gthread"
+wsgi_app = "rem_reports_listener:application"
+accesslog = "-"
+errorlog = "-"
+
+def post_fork(server, worker):
+  from rem_reports_listener import application, db
+  with application.app_context():
+    db.engine.dispose()
+```
+
+## Example of gunicorn_config_webapp.py
+```
+import sys
+import os
+
+#change to yours
+venv_path = "/usr/local/"
+sys.path.insert(0, os.path.join(venv_path, "lib/python3.11/site-packages"))
+#change to yours
+sys.path.insert(0, "/opt/Local-Backups.py")
+
+bind = "127.0.0.1:8002"
+workers = 2
+threads = 4
+worker_class = "gthread"
+wsgi_app = "webapp:application"
+accesslog = "-"
+errorlog = "-"
+```
+
+## Example of gunicorn-local-backups.service
+```
+[Unit]
+Description=Gunicorn instance for local-backups.py Webapp
+After=network.target
+
+[Service]
+User=localbackups
+Group=localbackups
+WorkingDirectory=/opt/Local-Backups.py
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/usr/bin/gunicorn -c /opt/Local-Backups.py/gunicorn_config_webapp.py webapp:application
+StandardOutput=append:/var/log/gunicorn/local-backups-webapp.log
+StandardError=append:/var/log/gunicorn/local-backups-webapp-errors.log
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## Example of gunicorn-local-backups-reports.service
+```
+[Unit]
+Description=Gunicorn instance for local-backups.py Reports
+After=network.target
+
+[Service]
+User=localbackups
+Group=localbackups
+WorkingDirectory=/opt/Local-Backups.py
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/usr/bin/gunicorn -c /opt/Local-Backups.py/gunicorn_config_listener.py rem_reports_listener:application
+StandardOutput=append:/var/log/gunicorn/local-backups-listener.log
+StandardError=append:/var/log/gunicorn/local-backups-listener-errors.log
+
+[Install]
+WantedBy=multi-user.target
+```
