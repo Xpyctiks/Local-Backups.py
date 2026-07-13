@@ -5,15 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Report Listener - Local-Backups</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" sizes="48x48">
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}">
 </head>
 <body>
   <nav class="nav">
-    <div class="nav-brand">Local-Backups - Report Listener</div>
+    <div class="nav-brand">Local-Backups Reports page</div>
     <div class="nav-links">
       {% if listener_running %}
-        <span style="color:#12793f;">&#9679; Listener daemon running</span>
+        <span style="color:#12793f;">&#9679; Listener daemon is running</span>
       {% else %}
-        <span style="color:#d92d20;">&#9679; Listener daemon not running</span>
+        <span style="color:#d92d20;">&#9679; Listener daemon is not running</span>
       {% endif %}
     </div>
     <form action="/logout/" method="POST" class="nav-logout">

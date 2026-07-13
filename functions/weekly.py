@@ -14,8 +14,8 @@ def weekly_local():
       text = "Weekly-Local: empty config for this type of job"
       logging.info(text)
       print(text)
-      send_to_telegram("⚠"+text)
-      send_remote_reports("Weekly-Local","⚠no jobs configured")
+      send_to_telegram("⚠️"+text)
+      send_remote_reports("Weekly-Local","⚠️no jobs configured")
       finish_job("Weekly-Local")
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME)):
@@ -66,9 +66,9 @@ def weekly_local():
     print(text)
     logging.info(text)
     if error_level == 0:
-      send_remote_reports("Weekly-Local","❇ok")
+      send_remote_reports("Weekly-Local","❇️ok")
     elif error_level == 1:
-      send_remote_reports("Weekly-Local","⚠some errors found")
+      send_remote_reports("Weekly-Local","⚠️some errors found")
     finish_job("Weekly-Local")
   except Exception as msg:
     logging.error(f"Weekly-Local: Global error {msg}")
@@ -83,8 +83,8 @@ def weekly_other():
       text = "Weekly-Other: empty config for this type of job"
       logging.info(text)
       print(text)
-      send_to_telegram("⚠"+text)
-      send_remote_reports("Weekly-Other","⚠no jobs configured")
+      send_to_telegram("⚠️"+text)
+      send_remote_reports("Weekly-Other","⚠️no jobs configured")
       finish_job("Weekly-Other")
     #listing items, dividing them to Folder and DB versions
     for item in variables.OTHER_BCKP_LIST:
@@ -148,9 +148,9 @@ def weekly_other():
     print(text)
     logging.info(text)
     if error_level == 0:
-      send_remote_reports("Weekly-Other","❇ok")
+      send_remote_reports("Weekly-Other","❇️ok")
     elif error_level == 1:
-      send_remote_reports("Weekly-Other","⚠some errors found")
+      send_remote_reports("Weekly-Other","⚠️some errors found")
     finish_job("Weekly-Other")
   except Exception as msg:
     logging.error(f"Weekly-Local: Global error {msg}")

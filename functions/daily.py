@@ -12,8 +12,8 @@ def daily_local():
       text = "Daily-Local: empty config for this type of job"
       logging.info(text)
       print(text)
-      send_to_telegram("⚠"+text)
-      send_remote_reports("Daily-Local","⚠no jobs configured")
+      send_to_telegram("⚠️"+text)
+      send_remote_reports("Daily-Local","⚠️no jobs configured")
       finish_job("Daily-Local")
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(variables.BCKP_FOLDER,variables.DAILY_FOLDER,variables.CURR_FOLDER_NAME)):
@@ -32,11 +32,11 @@ def daily_local():
         print(text)
         logging.info(text)
     if create_sha256(TO_FOLDER) and chown(TO_FOLDER):
-      send_remote_reports("Daily-Local","❇ok")
+      send_remote_reports("Daily-Local","❇️ok")
       finish_job("Daily-Local")
     else:
-      send_to_telegram(f"⚠ Daily-Local: error! Check logs! ")
-      send_remote_reports("Daily-Local","⚠some errors found")
+      send_to_telegram(f"⚠️ Daily-Local: error! Check logs! ")
+      send_remote_reports("Daily-Local","⚠️some errors found")
       interrupt_job("Daily-Local")
   except Exception as msg:
     logging.error(f"Daily-Local: Global error {msg}")
@@ -51,8 +51,8 @@ def daily_other():
       text = "Daily-Other: empty config for this type of job"
       logging.info(text)
       print(text)
-      send_to_telegram("⚠"+text)
-      send_remote_reports("Daily-Other","⚠no jobs configured")
+      send_to_telegram("⚠️"+text)
+      send_remote_reports("Daily-Other","⚠️no jobs configured")
       finish_job("Daily-Other")
     #listing items, dividing them to Folder and DB versions
     for item in variables.OTHER_BCKP_LIST:
@@ -68,15 +68,15 @@ def daily_other():
           logging.info(text)
         mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
         if not create_sha256(TO_FOLDER) or not chown(TO_FOLDER):
-          send_to_telegram(f"⚠ Daily-Other: errors found! Check logs! ")
+          send_to_telegram(f"⚠️ Daily-Other: errors found! Check logs! ")
           error_level = 1
         text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
         print(text)
         logging.info(text)
     if error_level == 0:
-      send_remote_reports("Daily-Other","❇ok")
+      send_remote_reports("Daily-Other","❇️ok")
     elif error_level == 1:
-      send_remote_reports("Daily-Other","⚠some errors found")
+      send_remote_reports("Daily-Other","⚠️some errors found")
     finish_job("Daily-Other")
   except Exception as msg:
     logging.error(f"Daily-Other: Global error {msg}")
