@@ -1,9 +1,10 @@
 from flask import render_template, request, redirect, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from db.db import db
 from db.database import Settings, User, RemoteReports, RemoteServers
 from pages import pages_bp
 import socket
+import logging
 
 SETTINGS_FIELDS = [
   "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder",
@@ -26,6 +27,7 @@ def admin_panel_settings_save():
   db.session.merge(Settings(**data))
   db.session.commit()
   flash("Settings saved.", "alert alert-success")
+  logging.info(f"General settings updated by {current_user.username}")
   return redirect("/admin_panel/settings/")
 
 @pages_bp.route("/admin_panel/remotes/", methods=["GET"])
@@ -63,6 +65,7 @@ def remote_servers_add():
   db.session.add(server)
   db.session.commit()
   flash(f"Remote server '{name}' added.", "alert alert-success")
+  logging.info(f"Remote server {name} {address} {port} added by {current_user.username}")
   return redirect("/admin_panel/remotes/")
 
 @pages_bp.route("/admin_panel/remotes/<int:server_id>/edit", methods=["POST"])
@@ -85,6 +88,7 @@ def remote_servers_edit(server_id):
   server.port = port
   db.session.commit()
   flash(f"Remote server '{name}' updated.", "alert alert-success")
+  logging.info(f"Remote server {name} {address} {port} edited by {current_user.username}")
   return redirect("/admin_panel/remotes/")
 
 @pages_bp.route("/admin_panel/remotes/<int:server_id>/delete", methods=["POST"])
@@ -95,6 +99,7 @@ def remote_servers_delete(server_id):
     db.session.delete(server)
     db.session.commit()
     flash(f"Remote server '{server.name}' deleted.", "alert alert-success")
+    logging.info(f"Remote server {server.name} deleted by {current_user.username}")
   return redirect("/admin_panel/remotes/")
 
 @pages_bp.route("/admin_panel/senders/", methods=["GET"])
@@ -126,6 +131,7 @@ def trusted_senders_add():
   db.session.add(sender)
   db.session.commit()
   flash(f"Trusted sender '{name}' added.", "alert alert-success")
+  logging.info(f"Trusted sender {name} {address} added by {current_user.username}")
   return redirect("/admin_panel/senders/")
 
 @pages_bp.route("/admin_panel/senders/<int:sender_id>/edit", methods=["POST"])
@@ -148,6 +154,7 @@ def trusted_senders_edit(sender_id):
   sender.address = address
   db.session.commit()
   flash(f"Trusted sender '{name}' updated.", "alert alert-success")
+  logging.info(f"Trusted sender {name} edited by {current_user.username}")
   return redirect("/admin_panel/senders/")
 
 @pages_bp.route("/admin_panel/senders/<int:sender_id>/delete", methods=["POST"])
@@ -158,6 +165,7 @@ def trusted_senders_delete(sender_id):
     db.session.delete(sender)
     db.session.commit()
     flash(f"Trusted sender '{sender.name}' deleted.", "alert alert-success")
+    logging.info(f"Trusted sender {sender.name} deleted by {current_user.username}")
   return redirect("/admin_panel/senders/")
 
 @pages_bp.route("/admin_panel/users/", methods=["GET"])
@@ -182,6 +190,7 @@ def admin_panel_users_add():
   db.session.add(user)
   db.session.commit()
   flash(f"User '{username}' created.", "alert alert-success")
+  logging.info(f"User {username} added by {current_user.username}")
   return redirect("/admin_panel/users/")
 
 @pages_bp.route("/admin_panel/users/<int:user_id>/delete", methods=["POST"])
@@ -195,6 +204,7 @@ def admin_panel_users_delete(user_id):
     db.session.delete(user)
     db.session.commit()
     flash(f"User '{user.username}' deleted.", "alert alert-success")
+    logging.info(f"User {user.username} deleted by {current_user.username}")
   return redirect("/admin_panel/users/")
 
 @pages_bp.route("/admin_panel/users/<int:user_id>/password", methods=["POST"])
@@ -206,4 +216,5 @@ def admin_panel_users_password(user_id):
     user.set_password(password)
     db.session.commit()
     flash(f"Password updated for '{user.username}'.", "alert alert-success")
+    logging.info(f"User {user.username} edited by {current_user.username}")
   return redirect("/admin_panel/users/")
