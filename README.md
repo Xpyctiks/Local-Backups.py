@@ -111,6 +111,35 @@ StandardError=append:/var/log/gunicorn/local-backups-webapp-errors.log
 WantedBy=multi-user.target
 ```
 
+## Example of local-backups-reports-listener.service
+
+This runs `rem_reports_listener.py` in its TCP daemon mode (mode 1 - accepts incoming job-report connections from other Local-Backups instances). It's independent from the `gunicorn-local-backups-reports.service` above, which only serves the web dashboard. `--foreground` is required under systemd `Type=simple`, since it supervises the process directly and would lose track of a self-detached child from the script's own double-fork daemonization.
+
+```
+[Unit]
+Description=Local-Backups.py Remote Reports Listener (TCP daemon)
+After=network.target
+
+[Service]
+Type=simple
+User=localbackups
+Group=localbackups
+WorkingDirectory=/opt/Local-Backups.py
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/usr/bin/python3 /opt/Local-Backups.py/rem_reports_listener.py --foreground
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start it with:
+```
+systemctl daemon-reload
+systemctl enable --now local-backups-reports-listener.service
+```
+
 ## Example of gunicorn-local-backups-reports.service
 ```
 [Unit]

@@ -18,7 +18,7 @@ def daily_local():
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(variables.BCKP_FOLDER,variables.DAILY_FOLDER,variables.CURR_FOLDER_NAME)):
       os.makedirs(os.path.join(variables.BCKP_FOLDER,variables.DAILY_FOLDER,variables.CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
-      text = f"\tCreated new directory {os.path.join(variables.BCKP_FOLDER,variables.DAILY_FOLDER,variables.CURR_FOLDER_NAME)}"
+      text = f"Created new directory {os.path.join(variables.BCKP_FOLDER,variables.DAILY_FOLDER,variables.CURR_FOLDER_NAME)}"
       print(text)
       logging.info(text)
     #Making full path to the destination folder
@@ -28,7 +28,7 @@ def daily_local():
       #If there is DB variable - doing backup of DB
       if item.get('DB'):
         mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Local")
-        text = f"\tDaily-Local DB backup of {item.get('Name')} done successfully!"
+        text = f"Daily-Local DB backup of {item.get('Name')} done successfully!"
         print(text)
         logging.info(text)
     if create_sha256(TO_FOLDER) and chown(TO_FOLDER):
@@ -63,14 +63,14 @@ def daily_other():
         #if ok, check and create for the today's folder
         if not os.path.exists(TO_FOLDER):
           os.makedirs(TO_FOLDER,mode=0o770,exist_ok=True)
-          text = f"\tCreated new directory {TO_FOLDER}"
+          text = f"Created new directory {TO_FOLDER}"
           print(text)
           logging.info(text)
         mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
         if not create_sha256(TO_FOLDER) or not chown(TO_FOLDER):
           send_to_telegram(f"⚠ Daily-Other: errors found! Check logs! ")
           error_level = 1
-        text = f"\tDaily-Other DB backup of {item.get('Name')} done successfully!"
+        text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
         print(text)
         logging.info(text)
     if error_level == 0:

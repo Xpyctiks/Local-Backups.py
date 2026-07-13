@@ -10,7 +10,6 @@ def weekly_local():
   configure_job_logging()
   try:
     error_level = 0
-    print(variables.LOCAL_BCKP_LIST)
     if len(variables.LOCAL_BCKP_LIST) == 0:
       text = "Weekly-Local: empty config for this type of job"
       logging.info(text)
@@ -21,7 +20,7 @@ def weekly_local():
     #if ok, check and create for the today's folder
     if not os.path.exists(os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME)):
       os.makedirs(os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME),mode=0o770,exist_ok=True)
-      text = f"\tCreated new directory {os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME)}"
+      text = f"Created new directory {os.path.join(variables.BCKP_FOLDER,variables.WEEKLY_FOLDER,variables.CURR_FOLDER_NAME)}"
       print(text)
       logging.info(text)
     #Making full path to the destination folder
@@ -63,7 +62,7 @@ def weekly_local():
       logging.error(text)
       send_to_telegram(text)
       error_level = 1
-    text = f"\tWeekly-Local Files and DB backups done successfully!"
+    text = f"Weekly-Local Files and DB backups done successfully!"
     print(text)
     logging.info(text)
     if error_level == 0:
@@ -145,7 +144,7 @@ def weekly_other():
           logging.error(text)
           send_to_telegram(text)
           error_level = 1
-    text = f"\tWeekly-Other Files and DB backups done successfully!"
+    text = f"Weekly-Other Files and DB backups done successfully!"
     print(text)
     logging.info(text)
     if error_level == 0:
