@@ -15,6 +15,7 @@
   <div class="container">
     <div class="panel">
       <h1>Local Server Backups</h1>
+      <h5>Settings for the job "Weekly-Local" and "Daily-Local". For "Daily-Local" only DB backups are being made. For "Weekly-Local" - folders are being backed up.</h5>
       <table>
         <thead><tr><th>Name</th><th>Type</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
@@ -41,6 +42,7 @@
     </div>
     <div class="panel">
       <h1>Other Backups</h1>
+      <h5>Settings for the job "Weekly-Other" and "Daily-Other". For "Daily-Other" only DB backups are being made. For "Weekly-Other" - folders are being backed up.</h5>
       <table>
         <thead><tr><th>Name</th><th>Type</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
@@ -67,6 +69,7 @@
     </div>
     <div class="panel">
       <h2>Add New Backup Job</h2>
+      <h5>The main difference between Local and Other backups is that Local backup uses Daily and Weekly folders inside "Backup Folder" from Settings. But Other uses personal folder inside the "Backup Folder" named as the job name.</h5>
       <form action="/backups/add" method="POST" id="add-backup-form">
         <label>Scope
           <select name="scope">

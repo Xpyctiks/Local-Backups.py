@@ -76,7 +76,8 @@ a:hover { color: var(--accent-hover); }
 }
 
 h1, h2 { margin-top: 0; }
-
+h5 { color: darkorange; }
+label { color: darkorange; }
 table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--muted); font-weight: 600; }

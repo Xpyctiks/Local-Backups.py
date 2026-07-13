@@ -14,10 +14,10 @@
   {% include "_nav.html" %}
   <div class="container">
     <div class="tabs">
-      <a href="/admin_panel/settings/" class="{{ 'active' if tab == 'settings' else '' }}">Settings</a>
-      <a href="/admin_panel/users/" class="{{ 'active' if tab == 'users' else '' }}">Users</a>
-      <a href="/admin_panel/remotes/" class="{{ 'active' if tab == 'remotes' else '' }}">Remote Servers</a>
-      <a href="/admin_panel/senders/" class="{{ 'active' if tab == 'senders' else '' }}">Trusted Senders</a>
+      <a href="/admin_panel/settings/" class="{{ 'active' if tab == 'settings' else '' }}">🎛Settings</a>
+      <a href="/admin_panel/users/" class="{{ 'active' if tab == 'users' else '' }}">🗿Users</a>
+      <a href="/admin_panel/remotes/" class="{{ 'active' if tab == 'remotes' else '' }}">📤Remote Servers</a>
+      <a href="/admin_panel/senders/" class="{{ 'active' if tab == 'senders' else '' }}">📗Trusted Senders</a>
     </div>
     {% if tab == 'settings' %}
     <div class="panel">
@@ -116,6 +116,7 @@
     {% elif tab == 'remotes' %}
     <div class="panel">
       <h1>Remote Servers</h1>
+      <h5>The list of servers, where results of backup processes on this server should be sent. Remote Reports Key must be set in Settings tab.</h5>
       <table>
         <thead><tr><th>Name</th><th>Address</th><th>Port</th><th>Created</th><th>Actions</th></tr></thead>
         <tbody>
@@ -139,7 +140,7 @@
       </table>
     </div>
     <div class="panel">
-      <h2 id="remote-form-title">Add New Remote Server</h2>
+      <h2 id="remote-form-title">Add new remote server</h2>
       <form action="/admin_panel/remotes/add" method="POST" id="remote-form">
         <label>Name
           <input type="text" name="name" id="remote-name" required>
@@ -148,7 +149,7 @@
           <input type="text" name="address" id="remote-address" required placeholder="10.0.0.5 or backup2.example.com">
         </label>
         <label>Port
-          <input type="number" name="port" id="remote-port" required min="1" max="65535" placeholder="22">
+          <input type="number" name="port" id="remote-port" required min="1" max="65535" placeholder="10555">
         </label>
         <button type="submit" id="remote-form-submit">Add Remote Server</button>
         <button type="button" id="remote-form-cancel" onclick="resetRemoteServerForm()" style="display:none;">Cancel</button>
@@ -157,7 +158,7 @@
     {% elif tab == 'senders' %}
     <div class="panel">
       <h1>Trusted Senders</h1>
-      <p>Servers allowed to submit job reports to this server's report listener (<code>rem_reports_listener.py</code>). An incoming report is accepted only if its source IP matches a row's Address <em>and</em> the key in the message matches that row's Personal Key.</p>
+      <h5>Servers allowed to submit job reports to this server's report listener (<code>rem_reports_listener.py</code>). An incoming report is accepted only if its source IP matches a row's Address <em>and</em> the key in the message matches that row's Personal Key.</h5>
       <table>
         <thead><tr><th>Name</th><th>Personal Key</th><th>Address</th><th>Created</th><th>Actions</th></tr></thead>
         <tbody>
