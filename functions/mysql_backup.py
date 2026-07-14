@@ -49,23 +49,28 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       return False
     elif variables.BCKP_DEF_DB_SOCKET and not variables.BCKP_DEF_DB_PORT:
       additional = shlex.quote(f"-S{variables.BCKP_DEF_DB_SOCKET}")
-      text2 += f"Using default SOCKET with DB {nameIn} backup "
+      text2 += f"Using default SOCKET {variables.BCKP_DEF_DB_SOCKET} with DB {nameIn} backup "
       print(text2)
       logging.info(text2)
     elif not variables.BCKP_DEF_DB_SOCKET and variables.BCKP_DEF_DB_PORT:
       additional = f"{shlex.quote(f'-h{mysqlHost}')} {shlex.quote(f'-P{variables.BCKP_DEF_DB_PORT}')}"
-      text2 += f"Using default PORT with DB {nameIn} backup "
+      text2 += f"Using default PORT {variables.BCKP_DEF_DB_PORT} with DB {nameIn} backup "
+      print(text2)
+      logging.info(text2)
+    else:
+      additional = shlex.quote(f"-S{variables.BCKP_DEF_DB_SOCKET}")
+      text2 += f"Both default SOCKET and PORT are defined. Taking Socket {variables.BCKP_DEF_DB_SOCKET} as high priority for DB {nameIn} backup "
       print(text2)
       logging.info(text2)
   #if set any of two personal values
   elif portIn and not socketIn:
     additional = f"{shlex.quote(f'-h{mysqlHost}')} {shlex.quote(f'-P{portIn}')}"
-    text2 += f"Using personal PORT value with DB {nameIn} backup "
+    text2 += f"Using personal PORT value {portIn} with DB {nameIn} backup "
     print(text2)
     logging.info(text2)
   elif not portIn and socketIn:
     additional = shlex.quote(f"-S{socketIn}")
-    text2 += f"Using personal SOCKET value with DB {nameIn} backup "
+    text2 += f"Using personal SOCKET value {socketIn} with DB {nameIn} backup "
     print(text2)
     logging.info(text2)
   mysqlUserArg = shlex.quote(f"-u{mysqlUser}")
