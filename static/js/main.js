@@ -8,14 +8,15 @@ function toggleJobType() {
 document.addEventListener("DOMContentLoaded", toggleJobType);
 
 function showDbDetails(btn) {
-  const { name, db, host, user, password, socket, port } = btn.dataset;
+  const { id, name, db, host, user, password, socket, port } = btn.dataset;
+  document.getElementById("db-details-form").action = `/backups/${id}/edit_db`;
   document.getElementById("db-details-title").textContent = `Database Connection Details: ${name}`;
-  document.getElementById("db-details-db").textContent = db || "-";
-  document.getElementById("db-details-host").textContent = host || "(default)";
-  document.getElementById("db-details-user").textContent = user || "(default)";
-  document.getElementById("db-details-password").textContent = password || "(default)";
-  document.getElementById("db-details-socket").textContent = socket || "(default)";
-  document.getElementById("db-details-port").textContent = port || "(default)";
+  document.getElementById("db-details-db").value = db || "";
+  document.getElementById("db-details-host").value = host || "";
+  document.getElementById("db-details-user").value = user || "";
+  document.getElementById("db-details-password").value = password || "";
+  document.getElementById("db-details-socket").value = socket || "";
+  document.getElementById("db-details-port").value = port || "";
   document.getElementById("db-details-modal").style.display = "flex";
 }
 

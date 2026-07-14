@@ -64,6 +64,31 @@ def backups_add():
   logging.info(f"New job added {job.name} by {current_user.username}")
   return redirect("/")
 
+@pages_bp.route("/backups/<int:job_id>/edit_db", methods=["POST"])
+@login_required
+def backups_edit_db(job_id):
+  job = db.session.get(BackupJob, job_id)
+  if not job:
+    flash("Backup job not found.", "alert alert-danger")
+    return redirect("/")
+  if job.folder is not None:
+    flash("This backup job is a Folder job, not a Database job.", "alert alert-danger")
+    return redirect("/")
+  db_name = (request.form.get("db") or "").strip()
+  if not db_name:
+    flash("Database name (or ALL / FETCH) is required.", "alert alert-danger")
+    return redirect("/")
+  job.db_name = db_name
+  job.dbHost = (request.form.get("dbHost") or "").strip() or None
+  job.dbUser = (request.form.get("dbUser") or "").strip() or None
+  job.dbPassword = (request.form.get("dbPassword") or "").strip() or None
+  job.dbSocket = (request.form.get("dbSocket") or "").strip() or None
+  job.dbPort = (request.form.get("dbPort") or "").strip() or None
+  db.session.commit()
+  flash(f"Database connection details for '{job.name}' updated.", "alert alert-success")
+  logging.info(f"DB connection details for job {job.name} edited by {current_user.username}")
+  return redirect("/")
+
 @pages_bp.route("/backups/<int:job_id>/delete", methods=["POST"])
 @login_required
 def backups_delete(job_id):

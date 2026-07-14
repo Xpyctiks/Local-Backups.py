@@ -27,7 +27,7 @@
             <td>{{ "Enabled" if job.enabled else "Disabled" }}</td>
             <td>
               {% if not job.folder %}
-              <button type="button" class="inline-form" data-name="{{ job.name }}" data-db="{{ job.db_name or '' }}" data-host="{{ job.dbHost or '' }}" data-user="{{ job.dbUser or '' }}" data-password="{{ job.dbPassword or '' }}" data-socket="{{ job.dbSocket or '' }}" data-port="{{ job.dbPort or '' }}" onclick="showDbDetails(this)">Details</button>
+              <button type="button" class="inline-form" data-id="{{ job.id }}" data-name="{{ job.name }}" data-db="{{ job.db_name or '' }}" data-host="{{ job.dbHost or '' }}" data-user="{{ job.dbUser or '' }}" data-password="{{ job.dbPassword or '' }}" data-socket="{{ job.dbSocket or '' }}" data-port="{{ job.dbPort or '' }}" onclick="showDbDetails(this)">Details</button>
               {% endif %}
               <form action="/backups/{{ job.id }}/toggle" method="POST" class="inline-form">
                 <button type="submit">{{ "Disable" if job.enabled else "Enable" }}</button>
@@ -57,7 +57,7 @@
             <td>{{ "Enabled" if job.enabled else "Disabled" }}</td>
             <td>
               {% if not job.folder %}
-              <button type="button" class="inline-form" data-name="{{ job.name }}" data-db="{{ job.db_name or '' }}" data-host="{{ job.dbHost or '' }}" data-user="{{ job.dbUser or '' }}" data-password="{{ job.dbPassword or '' }}" data-socket="{{ job.dbSocket or '' }}" data-port="{{ job.dbPort or '' }}" onclick="showDbDetails(this)">Details</button>
+              <button type="button" class="inline-form" data-id="{{ job.id }}" data-name="{{ job.name }}" data-db="{{ job.db_name or '' }}" data-host="{{ job.dbHost or '' }}" data-user="{{ job.dbUser or '' }}" data-password="{{ job.dbPassword or '' }}" data-socket="{{ job.dbSocket or '' }}" data-port="{{ job.dbPort or '' }}" onclick="showDbDetails(this)">Details</button>
               {% endif %}
               <form action="/backups/{{ job.id }}/toggle" method="POST" class="inline-form">
                 <button type="submit">{{ "Disable" if job.enabled else "Enable" }}</button>
@@ -123,15 +123,28 @@
   <div id="db-details-modal" class="modal-overlay" style="display:none;" onclick="if (event.target === this) closeDbDetails();">
     <div class="modal-box">
       <h2 id="db-details-title">Database Connection Details</h2>
-      <dl class="details-list">
-        <dt>Database</dt><dd id="db-details-db"></dd>
-        <dt>Host</dt><dd id="db-details-host"></dd>
-        <dt>User</dt><dd id="db-details-user"></dd>
-        <dt>Password</dt><dd id="db-details-password"></dd>
-        <dt>Socket</dt><dd id="db-details-socket"></dd>
-        <dt>Port</dt><dd id="db-details-port"></dd>
-      </dl>
-      <button type="button" onclick="closeDbDetails();">Close</button>
+      <form id="db-details-form" method="POST">
+        <label>Database name (or ALL / FETCH)
+          <input type="text" name="db" id="db-details-db" required>
+        </label>
+        <label>Host (optional, overrides default)
+          <input type="text" name="dbHost" id="db-details-host">
+        </label>
+        <label>User (optional, overrides default)
+          <input type="text" name="dbUser" id="db-details-user">
+        </label>
+        <label>Password (optional, overrides default)
+          <input type="password" name="dbPassword" id="db-details-password">
+        </label>
+        <label>Socket (optional, overrides default)
+          <input type="text" name="dbSocket" id="db-details-socket">
+        </label>
+        <label>Port (optional, overrides default)
+          <input type="text" name="dbPort" id="db-details-port">
+        </label>
+        <button type="submit">Save Changes</button>
+        <button type="button" onclick="closeDbDetails();">Cancel</button>
+      </form>
     </div>
   </div>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
