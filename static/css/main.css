@@ -141,3 +141,24 @@ fieldset { border: 1px solid var(--border); border-radius: var(--radius); margin
 .log-ERROR { color: #ff7b72; }
 .log-WARNING { color: #e3b341; }
 .log-INFO { color: #79c0ff; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 360px;
+  max-width: 90vw;
+}
+.details-list { margin: 0 0 16px; }
+.details-list dt { color: var(--muted); font-size: 12px; text-transform: uppercase; margin-top: 10px; }
+.details-list dd { margin: 2px 0 0; font-size: 14px; word-break: break-all; }
