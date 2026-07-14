@@ -8,6 +8,7 @@ from functions.send_to_telegram import send_to_telegram
 def daily_local():
   configure_job_logging()
   try:
+    error_level = 0
     if len(variables.LOCAL_BCKP_LIST) == 0:
       text = "Daily-Local: empty config for this type of job"
       logging.info(text)
@@ -27,11 +28,16 @@ def daily_local():
     for item in variables.LOCAL_BCKP_LIST:
       #If there is DB variable - doing backup of DB
       if item.get('DB'):
-        mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Local")
-        text = f"Daily-Local DB backup of {item.get('Name')} done successfully!"
-        print(text)
-        logging.info(text)
-    if create_sha256(TO_FOLDER) and chown(TO_FOLDER):
+        if mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Local"):
+          text = f"Daily-Local DB backup of {item.get('Name')} done successfully!"
+          print(text)
+          logging.info(text)
+        else:
+          text = f"Daily-Local DB backup of {item.get('Name')} failed!"
+          print(text)
+          logging.error(text)
+          error_level = 1
+    if error_level == 0 and create_sha256(TO_FOLDER) and chown(TO_FOLDER):
       send_remote_reports("Daily-Local","❇️ok")
       finish_job("Daily-Local")
     else:
@@ -66,13 +72,18 @@ def daily_other():
           text = f"Created new directory {TO_FOLDER}"
           print(text)
           logging.info(text)
-        mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other")
+        if mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Daily-Other"):
+          text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
+          print(text)
+          logging.info(text)
+        else:
+          text = f"Daily-Other DB backup of {item.get('Name')} failed!"
+          print(text)
+          logging.error(text)
+          error_level = 1
         if not create_sha256(TO_FOLDER) or not chown(TO_FOLDER):
           send_to_telegram(f"⚠️ Daily-Other: errors found! Check logs! ")
           error_level = 1
-        text = f"Daily-Other DB backup of {item.get('Name')} done successfully!"
-        print(text)
-        logging.info(text)
     if error_level == 0:
       send_remote_reports("Daily-Other","❇️ok")
     elif error_level == 1:

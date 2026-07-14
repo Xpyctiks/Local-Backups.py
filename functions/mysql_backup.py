@@ -5,9 +5,10 @@ from functions.send_to_telegram import send_to_telegram
 from functions.func import part_of_day
 from functions import variables
 
-def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typeIn):
+def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typeIn) -> bool:
   text = f"Processing {typeIn} DB backup {nameIn} - DB name {dbIn} - TO folder {tofolderIn}"
   additional = ""
+  success = True
   print(text)
   logging.info(text)
   #checking if all necessary default variables for mysql are set
@@ -45,6 +46,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       print(text)
       logging.info(text)
       send_to_telegram(text)
+      return False
     elif variables.BCKP_DEF_DB_SOCKET and not variables.BCKP_DEF_DB_PORT:
       additional = shlex.quote(f"-S{variables.BCKP_DEF_DB_SOCKET}")
       text2 += f"Using default SOCKET with DB {nameIn} backup "
@@ -84,9 +86,11 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       logging.error(text)
       print(text)
       send_to_telegram(text)
-    text = f"\tDaily ALL DB Local backup of {nameIn} done successfully!"
-    print(text)
-    logging.info(text)
+      success = False
+    else:
+      text = f"\tDaily ALL DB Local backup of {nameIn} done successfully!"
+      print(text)
+      logging.info(text)
   #now check if FETCH selected
   elif dbIn == "FETCH":
     cmd = f'mysql {mysqlUserArg} {mysqlPassArg} {additional} -e "SHOW DATABASES;"'
@@ -97,6 +101,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       print(text)
       logging.info(text)
       send_to_telegram(text)
+      success = False
     else:
       text = f"Total fetched databases: {databases}"
       print(text)
@@ -119,6 +124,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
           logging.error(text)
           print(text)
           send_to_telegram(text)
+          success = False
           continue
   #if individual database selected
   else:
@@ -138,3 +144,5 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
       logging.error(text)
       print(text)
       send_to_telegram(text)
+      success = False
+  return success

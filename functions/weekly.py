@@ -56,7 +56,11 @@ def weekly_local():
           continue
       #If there is DB variable - doing backup of DB
       elif item.get('DB'):
-        mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Local")
+        if not mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Local"):
+          text = f"Weekly-Local DB backup of {item.get('Name')} failed!"
+          print(text)
+          logging.error(text)
+          error_level = 1
     if not create_sha256(TO_FOLDER):
       text = f"Errors during creating SHA265 hash inside {TO_FOLDER}"
       logging.error(text)
@@ -138,7 +142,11 @@ def weekly_other():
           text = f"Created new directory {TO_FOLDER}"
           print(text)
           logging.info(text)
-        mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Other")
+        if not mysql_backup(TO_FOLDER,item.get('Name'),item.get('DB'),item.get('User'),item.get('Host'),item.get('Socket'),item.get('Port'),item.get('Password'),"Weekly-Other"):
+          text = f"Weekly-Other DB backup of {item.get('Name')} failed!"
+          print(text)
+          logging.error(text)
+          error_level = 1
         if not create_sha256(TO_FOLDER):
           text = f"Errors during creating SHA265 hash inside {TO_FOLDER}"
           logging.error(text)
