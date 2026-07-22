@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, flash
+from flask import render_template, request, redirect, flash, current_app
 from flask_login import login_required, current_user
 from db.db import db
 from db.database import Settings, User, RemoteReports, RemoteServers
@@ -16,7 +16,7 @@ SETTINGS_FIELDS = [
 @login_required
 def admin_panel_settings():
   settings = db.session.get(Settings, 1)
-  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="settings", settings=settings, users=None)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="settings", settings=settings, users=None,version=current_app.config.get("VERSION",""))
 
 @pages_bp.route("/admin_panel/settings/", methods=["POST"])
 @login_required
@@ -34,7 +34,7 @@ def admin_panel_settings_save():
 @login_required
 def remote_servers_settings():
   servers = RemoteReports.query.order_by(RemoteReports.name).all()
-  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="remotes", settings=None, users=None, remotes=servers)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="remotes", settings=None, users=None, remotes=servers,version=current_app.config.get("VERSION",""))
 
 def _parse_remote_server_form(request):
   #Returns (name, address, port, error_message). error_message is None if the input is valid.
@@ -106,7 +106,7 @@ def remote_servers_delete(server_id):
 @login_required
 def trusted_senders_settings():
   senders = RemoteServers.query.order_by(RemoteServers.name).all()
-  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="senders", settings=None, users=None, senders=senders)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="senders", settings=None, users=None, senders=senders, version=current_app.config.get("VERSION",""))
 
 def _parse_trusted_sender_form(request):
   #Returns (name, personalkey, address, error_message). error_message is None if the input is valid.
@@ -172,7 +172,7 @@ def trusted_senders_delete(sender_id):
 @login_required
 def admin_panel_users():
   users = User.query.order_by(User.username).all()
-  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="users", settings=None, users=users)
+  return render_template("template-admin_panel.html", hostname=socket.gethostname(), tab="users", settings=None, users=users, version=current_app.config.get("VERSION",""))
 
 @pages_bp.route("/admin_panel/users/add", methods=["POST"])
 @login_required

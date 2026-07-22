@@ -29,6 +29,18 @@ Installation:
 - For a database name you can also use the special values `ALL` (dumps `--all-databases` into one file) or `FETCH` (enumerates every database on the server and dumps each individually - requires DB credentials broad enough to see all databases).
 - If you run a Daily DB backup between 0:00 and 12:00 (24h time) the dump file gets a `-morning` suffix; running again after 12:00 produces a second dump with a `-evening` suffix, so both are kept.
 
+## CLI (admin panel management)
+
+`main.py` is a [click](https://click.palletsprojects.com/) app, so besides the four job commands above it exposes every setting the web admin panel has, for headless/scripted setup. Run `<script_name> --help` or `<script_name> <group> <command> --help` for the full option list. Commands are grouped by admin panel tab:
+
+- `settings show` / `settings set [OPTIONS]` - Telegram credentials, folders, default DB credentials, OS user/group, Authelia logout URL, remote reports key, and the reports listener bind address/port (`/admin_panel/settings/`). `set` only touches the options you pass.
+- `jobs list [--scope Local|Other]`, `jobs add-folder NAME FOLDER --scope ...`, `jobs add-db NAME DB --scope ... [--host --port --socket --user --password]`, `jobs edit-db JOB_ID [OPTIONS]`, `jobs enable/disable JOB_ID`, `jobs delete JOB_ID` - the same backup jobs managed on the main dashboard (`/`).
+- `remotes list/add/edit/delete` - remote report servers notified on job success/failure (`/admin_panel/remotes/`).
+- `senders list/add/edit/delete` - trusted senders allowed to submit remote reports (`/admin_panel/senders/`).
+- `users list`, `users add USERNAME`, `users passwd USERNAME`, `users delete USERNAME` - web login accounts (`/admin_panel/users/`); passwords are prompted for interactively (hidden input) if not piped in.
+
+The underlying functions live in `functions/cli_*.py`, one file per admin panel tab.
+
 ## Web admin panel
 
 Run the web app with gunicorn for day-to-day configuration, viewing configured backups, and viewing logs:

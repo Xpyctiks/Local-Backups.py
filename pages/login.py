@@ -1,7 +1,7 @@
 from datetime import timedelta
 import logging
 from functions.send_to_telegram import send_to_telegram
-from flask import render_template, request, redirect, session, flash
+from flask import render_template, request, redirect, session, flash, current_app
 from flask_login import login_user, current_user
 from db.database import User
 from pages import pages_bp
@@ -11,7 +11,7 @@ def login_page():
   if current_user.is_authenticated:
     logging.info(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>POST request: User {current_user.username} IP:{request.remote_addr} is already logged in. Redirecting to the main page.")
     return redirect("/")
-  return render_template("template-login.html")
+  return render_template("template-login.html",version=current_app.config.get("VERSION",""))
 
 @pages_bp.route("/login/", methods=["POST"])
 def do_login():

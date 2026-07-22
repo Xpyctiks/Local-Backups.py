@@ -12,7 +12,7 @@ application = create_app()
 generate_default_config(application)
 load_config(application)
 application.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
-
+application.config["VERSION"] = "1.5.0"
 login_manager = LoginManager()
 login_manager.login_view = "pages.login_page"
 login_manager.init_app(application)

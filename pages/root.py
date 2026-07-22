@@ -1,7 +1,7 @@
 import logging
 import os
 import socket
-from flask import render_template, request, redirect, flash
+from flask import render_template, request, redirect, flash, current_app
 from flask_login import login_required, current_user
 from db.db import db
 from db.database import BackupJob, BACKUP_NAME_PATTERN
@@ -12,7 +12,7 @@ from pages import pages_bp
 def dashboard():
   local_jobs = BackupJob.query.filter_by(scope="Local").order_by(BackupJob.name).all()
   other_jobs = BackupJob.query.filter_by(scope="Other").order_by(BackupJob.name).all()
-  return render_template("template-main.html", local_jobs=local_jobs, other_jobs=other_jobs, hostname=socket.gethostname())
+  return render_template("template-main.html", local_jobs=local_jobs, other_jobs=other_jobs, hostname=socket.gethostname(),version=current_app.config.get("VERSION",""))
 
 @pages_bp.route("/backups/add", methods=["POST"])
 @login_required
