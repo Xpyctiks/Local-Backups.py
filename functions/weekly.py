@@ -4,6 +4,7 @@ import tarfile
 from functions.send_to_telegram import send_to_telegram
 from functions.func import create_sha256,finish_job,configure_job_logging,send_remote_reports
 from functions.mysql_backup import mysql_backup
+from functions.upload import upload_backup
 from functions import variables
 
 def weekly_local():
@@ -66,6 +67,8 @@ def weekly_local():
       logging.error(text)
       send_to_telegram(text)
       error_level = 1
+    if not upload_backup(TO_FOLDER,"Weekly-Local"):
+      error_level = 1
     text = f"Weekly-Local Files and DB backups done successfully!"
     print(text)
     logging.info(text)
@@ -125,6 +128,8 @@ def weekly_other():
             logging.error(text)
             send_to_telegram(text)
             error_level = 1
+          if not upload_backup(TO_FOLDER,"Weekly-Other"):
+            error_level = 1
         except Exception as msg:
           text = f"🚨Some error while packing folder {item.get('Folder')}. Error: {msg}"
           logging.error(text)
@@ -151,6 +156,8 @@ def weekly_other():
           text = f"Errors during creating SHA265 hash inside {TO_FOLDER}"
           logging.error(text)
           send_to_telegram(text)
+          error_level = 1
+        if not upload_backup(TO_FOLDER,"Weekly-Other"):
           error_level = 1
     text = f"Weekly-Other Files and DB backups done successfully!"
     print(text)

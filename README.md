@@ -29,11 +29,20 @@ Installation:
 - For a database name you can also use the special values `ALL` (dumps `--all-databases` into one file) or `FETCH` (enumerates every database on the server and dumps each individually - requires DB credentials broad enough to see all databases).
 - If you run a Daily DB backup between 0:00 and 12:00 (24h time) the dump file gets a `-morning` suffix; running again after 12:00 produces a second dump with a `-evening` suffix, so both are kept.
 
+## Uploading backups to a remote server
+
+After a job finishes creating a backup folder (and its `sha256sum.txt`), it can be copied to a remote server with `scp -r`. Uploading is off until both the upload server and the upload user are set (`/admin_panel/settings/` or `settings set --upload-server ... --upload-user ...`).
+
+- The remote layout mirrors the local one under the backup folder: `Daily/<date>` for Local jobs and `<Name>/Daily/<date>` for Other jobs, placed inside the upload remote folder (empty means the SSH user's home). Missing remote folders are created with `ssh mkdir -p` (best effort).
+- Authentication must be non-interactive (key based, host already in `known_hosts`), because jobs normally run from cron. Use the upload key file setting if the default key isn't the right one.
+- Optionally the backup folder and its files are `chmod`-ed (`uploadPermFolders`/`uploadPermFiles`) right before uploading.
+- A failed upload is logged, sent to Telegram, and marks the job as finished with errors. Note that names with spaces in remote paths may fail with old OpenSSH versions (before 9.0), where scp goes through a remote shell.
+
 ## CLI (admin panel management)
 
 `main.py` is a [click](https://click.palletsprojects.com/) app, so besides the four job commands above it exposes every setting the web admin panel has, for headless/scripted setup. Run `<script_name> --help` or `<script_name> <group> <command> --help` for the full option list. Commands are grouped by admin panel tab:
 
-- `settings show` / `settings set [OPTIONS]` - Telegram credentials, folders, default DB credentials, OS user/group, Authelia logout URL, remote reports key, and the reports listener bind address/port (`/admin_panel/settings/`). `set` only touches the options you pass.
+- `settings show` / `settings set [OPTIONS]` - Telegram credentials, folders, default DB credentials, OS user/group, Authelia logout URL, remote reports key, and the reports listener bind address/port, and the backup upload options (`/admin_panel/settings/`). `set` only touches the options you pass.
 - `jobs list [--scope Local|Other]`, `jobs add-folder NAME FOLDER --scope ...`, `jobs add-db NAME DB --scope ... [--host --port --socket --user --password]`, `jobs edit-db JOB_ID [OPTIONS]`, `jobs enable/disable JOB_ID`, `jobs delete JOB_ID` - the same backup jobs managed on the main dashboard (`/`).
 - `remotes list/add/edit/delete` - remote report servers notified on job success/failure (`/admin_panel/remotes/`).
 - `senders list/add/edit/delete` - trusted senders allowed to submit remote reports (`/admin_panel/senders/`).

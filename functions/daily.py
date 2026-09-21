@@ -2,6 +2,7 @@ import os
 import logging
 from functions.func import create_sha256,finish_job,chown,interrupt_job,configure_job_logging,send_remote_reports
 from functions.mysql_backup import mysql_backup
+from functions.upload import upload_backup
 from functions import variables
 from functions.send_to_telegram import send_to_telegram
 
@@ -37,7 +38,7 @@ def daily_local():
           print(text)
           logging.error(text)
           error_level = 1
-    if error_level == 0 and create_sha256(TO_FOLDER) and chown(TO_FOLDER):
+    if error_level == 0 and create_sha256(TO_FOLDER) and chown(TO_FOLDER) and upload_backup(TO_FOLDER,"Daily-Local"):
       send_remote_reports("Daily-Local","❇️ok")
       finish_job("Daily-Local")
     else:
@@ -83,6 +84,8 @@ def daily_other():
           error_level = 1
         if not create_sha256(TO_FOLDER) or not chown(TO_FOLDER):
           send_to_telegram(f"⚠️ Daily-Other: errors found! Check logs! ")
+          error_level = 1
+        if not upload_backup(TO_FOLDER,"Daily-Other"):
           error_level = 1
     if error_level == 0:
       send_remote_reports("Daily-Other","❇️ok")

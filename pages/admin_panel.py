@@ -9,7 +9,8 @@ import logging
 SETTINGS_FIELDS = [
   "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder",
   "defaultDbHost", "defaultDbPort", "defaultDbSocket", "defaultDbUser", "defaultDbPass",
-  "osUser", "osGroup", "autheliaLogoutUrl", "remoteReportsKey", "reportsListenerBindAddr", "reportsListenerBindPort"
+  "osUser", "osGroup", "autheliaLogoutUrl", "remoteReportsKey", "reportsListenerBindAddr", "reportsListenerBindPort",
+  "uploadServer", "uploadUser", "uploadPort", "uploadKeyFile", "uploadRemoteFolder", "uploadUpdPerm", "uploadPermFiles", "uploadPermFolders"
 ]
 
 @pages_bp.route("/admin_panel/settings/", methods=["GET"])

@@ -6,7 +6,8 @@ from functions.cli_common import app_for_admin
 SETTINGS_FIELDS = [
   "telegramToken", "telegramChat", "logFolder", "dailyFolder", "weeklyFolder", "backupFolder",
   "defaultDbHost", "defaultDbPort", "defaultDbSocket", "defaultDbUser", "defaultDbPass",
-  "osUser", "osGroup", "autheliaLogoutUrl", "remoteReportsKey", "reportsListenerBindAddr", "reportsListenerBindPort"
+  "osUser", "osGroup", "autheliaLogoutUrl", "remoteReportsKey", "reportsListenerBindAddr", "reportsListenerBindPort",
+  "uploadServer", "uploadUser", "uploadPort", "uploadKeyFile", "uploadRemoteFolder", "uploadUpdPerm", "uploadPermFiles", "uploadPermFolders"
 ]
 SECRET_FIELDS = {"telegramToken", "defaultDbPass", "remoteReportsKey"}
 
@@ -48,6 +49,14 @@ def settings_show(reveal_secrets):
 @click.option("--remote-reports-key", "remoteReportsKey", default=None, help="Shared key sent to remote report listeners.")
 @click.option("--reports-listener-bind-addr", "reportsListenerBindAddr", default=None, help="Bind address for the remote reports listener.")
 @click.option("--reports-listener-bind-port", "reportsListenerBindPort", default=None, help="Bind port for the remote reports listener.")
+@click.option("--upload-server", "uploadServer", default=None, help="Remote server to upload finished backups to via scp. Empty (with user) disables uploading.")
+@click.option("--upload-user", "uploadUser", default=None, help="SSH user on the remote server.")
+@click.option("--upload-port", "uploadPort", default=None, help="SSH port of the remote server.")
+@click.option("--upload-key-file", "uploadKeyFile", default=None, help="Path to the SSH private key used for uploading (optional).")
+@click.option("--upload-remote-folder", "uploadRemoteFolder", default=None, help="Base folder on the remote server; empty means the SSH user's home.")
+@click.option("--upload-upd-perm", "uploadUpdPerm", type=click.Choice(["0", "1"]), default=None, help="1 - chmod the backup folder and its files before uploading, 0 - don't.")
+@click.option("--upload-perm-files", "uploadPermFiles", default=None, help="Octal permissions for uploaded backup files, e.g. 660.")
+@click.option("--upload-perm-folders", "uploadPermFolders", default=None, help="Octal permissions for uploaded backup folders, e.g. 770.")
 def settings_set(**fields):
   """Update one or more general settings. Only options you pass are changed."""
   updates = {field: value.strip() for field, value in fields.items() if value is not None}

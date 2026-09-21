@@ -17,3 +17,5 @@ log/
 gunicorn_config.py
 gunicorn_config_listener.py
 *.service
+.*
+!.gitignore

@@ -75,6 +75,33 @@
         <label>Reports Listener Bind port
           <input type="text" name="reportsListenerBindPort" value="{{ settings.reportsListenerBindPort or '' }}">
         </label>
+        <label>Upload Server (optional, remote server for uploading finished backups via scp; uploading is off unless server and user are both set)
+          <input type="text" name="uploadServer" value="{{ settings.uploadServer or '' }}">
+        </label>
+        <label>Upload User
+          <input type="text" name="uploadUser" value="{{ settings.uploadUser or '' }}">
+        </label>
+        <label>Upload SSH Port
+          <input type="text" name="uploadPort" value="{{ settings.uploadPort or '' }}" placeholder="22">
+        </label>
+        <label>Upload SSH Key File (optional, path to the private key)
+          <input type="text" name="uploadKeyFile" value="{{ settings.uploadKeyFile or '' }}">
+        </label>
+        <label>Upload Remote Folder (optional, empty - home folder of the upload user)
+          <input type="text" name="uploadRemoteFolder" value="{{ settings.uploadRemoteFolder or '' }}">
+        </label>
+        <label>Update Permissions before upload
+          <select name="uploadUpdPerm">
+            <option value="1" {{ 'selected' if settings.uploadUpdPerm == '1' else '' }}>Yes</option>
+            <option value="0" {{ 'selected' if settings.uploadUpdPerm != '1' else '' }}>No</option>
+          </select>
+        </label>
+        <label>Upload Files Permissions (octal)
+          <input type="text" name="uploadPermFiles" value="{{ settings.uploadPermFiles or '' }}" placeholder="660">
+        </label>
+        <label>Upload Folders Permissions (octal)
+          <input type="text" name="uploadPermFolders" value="{{ settings.uploadPermFolders or '' }}" placeholder="770">
+        </label>
         <button type="submit">Save Settings</button>
       </form>
     </div>

@@ -27,6 +27,14 @@ class Settings(db.Model):
   remoteReportsKey = db.Column(db.String(255), nullable=True, default="")
   reportsListenerBindAddr = db.Column(db.String(255), nullable=True, default="127.0.0.1")
   reportsListenerBindPort = db.Column(db.String(16), nullable=True, default="10555")
+  uploadServer = db.Column(db.String(255), nullable=True, default="")
+  uploadUser = db.Column(db.String(128), nullable=True, default="")
+  uploadPort = db.Column(db.String(16), nullable=True, default="22")
+  uploadKeyFile = db.Column(db.String(255), nullable=True, default="")
+  uploadRemoteFolder = db.Column(db.String(255), nullable=True, default="")
+  uploadUpdPerm = db.Column(db.String(1), nullable=True, default="1")
+  uploadPermFiles = db.Column(db.String(4), nullable=True, default="660")
+  uploadPermFolders = db.Column(db.String(4), nullable=True, default="770")
 
 class BackupJob(db.Model):
   id = db.Column(db.Integer, primary_key=True)

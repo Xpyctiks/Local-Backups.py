@@ -2,6 +2,7 @@ import os
 import logging
 import secrets
 from flask import Flask
+from sqlalchemy import inspect, text as sql_text
 from db.db import db
 from db.database import Settings, BackupJob, User
 from functions import variables
@@ -32,6 +33,8 @@ def generate_default_config(app: Flask) -> bool:
     logging.info(f"No DB file exists. Creating the new one!")
   with app.app_context():
     db.create_all()
+    if not fresh:
+      _add_missing_settings_columns()
     if fresh:
       migrated = False
       if not migrated:
@@ -42,6 +45,20 @@ def generate_default_config(app: Flask) -> bool:
     else:
       logging.info(f"Kickstart: DB already exsits! Using it...")
   return fresh
+
+def _add_missing_settings_columns() -> None:
+  #create_all() never alters existing tables, so columns added to Settings after a DB was created are added here.
+  table = Settings.__tablename__
+  existing = {c["name"] for c in inspect(db.engine).get_columns(table)}
+  for col in Settings.__table__.columns:
+    if col.name in existing:
+      continue
+    ddl = f'ALTER TABLE {table} ADD COLUMN {col.name} {col.type.compile(db.engine.dialect)}'
+    if col.default is not None:
+      ddl += " DEFAULT '" + str(col.default.arg).replace("'", "''") + "'"
+    db.session.execute(sql_text(ddl))
+    logging.info(f"Kickstart: added missing column {table}.{col.name}")
+  db.session.commit()
 
 def _seed_defaults() -> None:
   settings = Settings(
@@ -126,6 +143,14 @@ def load_config(app: Flask) -> None:
     variables.REMOTE_REPORTS_KEY = settings.remoteReportsKey
     variables.REPORTS_LISTENER_BIND_ADDR = settings.reportsListenerBindAddr
     variables.REPORTS_LISTENER_BIND_PORT = settings.reportsListenerBindPort
+    variables.UPLOAD_SERVER = settings.uploadServer or ""
+    variables.UPLOAD_USER = settings.uploadUser or ""
+    variables.UPLOAD_PORT = settings.uploadPort or "22"
+    variables.UPLOAD_KEY_FILE = settings.uploadKeyFile or ""
+    variables.UPLOAD_REMOTE_FOLDER = settings.uploadRemoteFolder or ""
+    variables.UPLOAD_UPD_PERM = settings.uploadUpdPerm or "0"
+    variables.UPLOAD_PERM_FILES = settings.uploadPermFiles or "660"
+    variables.UPLOAD_PERM_FOLDERS = settings.uploadPermFolders or "770"
     logging.info(f"Kickstart: loading configuration done!")
 
 def _job_to_dict(job: BackupJob) -> dict:
