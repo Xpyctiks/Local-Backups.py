@@ -36,6 +36,22 @@ def _remote_parent(folder: str) -> str:
   parts = [p for p in posixpath.dirname(rel).split("/") if p and p != "."]
   return posixpath.join(variables.UPLOAD_REMOTE_FOLDER or "", *parts) or "."
 
+def _ensure_remote_folder(remote_parent: str, port: str, ssh_opts: list, target: str, jobtype: str) -> None:
+  #scp can't create missing parent folders, so create them over a plain shell command first. Best effort -
+  #if the remote account has no shell (chrooted/SFTP-only), this fails and scp itself will report the missing folder.
+  if remote_parent in ("", "."):
+    return
+  try:
+    result = subprocess.run(["ssh", "-p", port, *ssh_opts, target, f"mkdir -p {shlex.quote(remote_parent)}"], capture_output=True, text=True)
+    if result.returncode != 0:
+      text = f"{jobtype}: could not create remote folder {remote_parent}: {(result.stderr or result.stdout).strip()}"
+      print(text)
+      logging.warning(text)
+  except Exception as msg:
+    text = f"{jobtype}: could not create remote folder {remote_parent}: {msg}"
+    print(text)
+    logging.warning(text)
+
 def upload_backup(folder: str, jobtype: str) -> bool:
   """Copies the finished backup folder to the remote server via scp. Returns True if uploading is disabled or succeeded."""
   if not upload_enabled():
@@ -57,11 +73,8 @@ def upload_backup(folder: str, jobtype: str) -> bool:
   ssh_opts = ["-o", "BatchMode=yes"]
   if variables.UPLOAD_KEY_FILE:
     ssh_opts += ["-i", variables.UPLOAD_KEY_FILE]
+  _ensure_remote_folder(remote_parent, port, ssh_opts, target, jobtype)
   try:
-    #scp can't create missing parent folders, so try to create them first. Best effort - the remote side may not give a shell.
-    mkdir = subprocess.run(["ssh", "-p", port, *ssh_opts, target, f"mkdir -p {shlex.quote(remote_parent)}"], capture_output=True, text=True)
-    if mkdir.returncode != 0:
-      logging.warning(f"{jobtype}: could not create remote folder {remote_parent}: {mkdir.stderr.strip()}")
     result = subprocess.run(["scp", "-r", "-P", port, *ssh_opts, "--", folder, f"{target}:{remote_parent}/"], capture_output=True, text=True)
   except FileNotFoundError as msg:
     return _fail(f"{jobtype}: ssh/scp is not installed: {msg}")
