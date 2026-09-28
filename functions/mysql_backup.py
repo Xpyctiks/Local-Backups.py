@@ -5,6 +5,10 @@ from functions.send_to_telegram import send_to_telegram
 from functions.func import part_of_day
 from functions import variables
 
+def _run(cmd: str):
+  #Pipefail is required so a failing mysqldump is detected even though gzip (the last command in the pipe) succeeds.
+  return subprocess.run(f"set -o pipefail; {cmd}", capture_output=True, text=True, shell=True, executable="/bin/bash")
+
 def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typeIn) -> bool:
   text = f"Processing {typeIn} DB backup {nameIn} - DB name {dbIn} - TO folder {tofolderIn}"
   additional = ""
@@ -85,7 +89,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     else:
       outFile = shlex.quote(f"{tofolderIn}/All-databases.sql.gz")
     cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick --all-databases | gzip > {outFile}"
-    result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+    result = _run(cmd)
     if result.returncode != 0:
       text = f"\tSome error while dumping Daily ALL DB backup of {nameIn}. Error: {result.stderr.strip()}"
       logging.error(text)
@@ -99,7 +103,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
   #now check if FETCH selected
   elif dbIn == "FETCH":
     cmd = f'mysql {mysqlUserArg} {mysqlPassArg} {additional} -e "SHOW DATABASES;"'
-    result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+    result = _run(cmd)
     databases = result.stdout.strip().split("\n")[1:]
     if len(databases) == 0:
       text = f"No databases found in the server. Can't proceed with FETCH DB backup"
@@ -123,7 +127,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
         else:
           outFile = shlex.quote(f"{tofolderIn}/{db}.sql.gz")
         cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick {dbArg} | gzip > {outFile}"
-        result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        result = _run(cmd)
         if result.returncode != 0:
           text = f"Some error while dumping Daily FETCH DB backup of {db}. Error: {result.stderr.strip()}"
           logging.error(text)
@@ -143,7 +147,7 @@ def mysql_backup(tofolderIn,nameIn,dbIn,userIn,hostIn,socketIn,portIn,passIn,typ
     else:
       backup_file = tofolderIn+"/"+nameIn+".sql.gz"
       cmd = f"mysqldump {mysqlUserArg} {mysqlPassArg} {additional} --single-transaction --quick {dbArg} | gzip > {shlex.quote(backup_file)}"
-    result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+    result = _run(cmd)
     if result.returncode != 0:
       text = f"Some error while dumping Weekly DB backup of {nameIn}. Error: {result.stderr.strip()}"
       logging.error(text)
